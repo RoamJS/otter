@@ -1,0 +1,16 @@
+{
+  "name": "otter",
+  "version": "1.0.0",
+  "description": "Import your audio notes from Otter directly into Roam!",
+  "main": "./build/main.js",
+  "scripts": {
+    "build": "roamjs-scripts build",
+    "dev": "roamjs-scripts dev"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@types/react": "^17.0.5",
+    "@types/react-dom": "^17.0.3",
+    "roamjs-scripts": "^0.4.1"
+  }
+}
