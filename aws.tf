@@ -22,6 +22,14 @@ variable "aws_secret_token" {
   type = string
 }
 
+variable "developer_token" {
+  type = string
+}
+
+variable "github_token" {
+  type = string
+}
+
 provider "aws" {
     region = "us-east-1"
     access_key = var.aws_access_token
@@ -70,7 +78,7 @@ resource "aws_lambda_function" "lambda_function" {
 resource "aws_api_gateway_method" "method" {
   rest_api_id   = data.aws_api_gateway_rest_api.rest_api.id
   resource_id   = aws_api_gateway_resource.resource.id
-  http_method   = "GET"
+  http_method   = "POST"
   authorization = "NONE"
 }
 
@@ -148,6 +156,7 @@ resource "aws_api_gateway_integration_response" "mock" {
 
 provider "github" {
     owner = "dvargas92495"
+    token = var.github_token
 }
 
 resource "github_actions_secret" "deploy_aws_access_key" {
@@ -160,4 +169,16 @@ resource "github_actions_secret" "deploy_aws_access_secret" {
   repository       = "roamjs-otter"
   secret_name      = "DEPLOY_AWS_ACCESS_SECRET"
   plaintext_value  = var.aws_secret_token
+}
+
+resource "github_actions_secret" "developer_token" {
+  repository       = "roamjs-otter"
+  secret_name      = "ROAMJS_DEVELOPER_TOKEN"
+  plaintext_value  = var.developer_token
+}
+
+resource "github_actions_secret" "github_token" {
+  repository       = "roamjs-otter"
+  secret_name      = "ROAMJS_RELEASE_TOKEN"
+  plaintext_value  = var.github_token
 }
