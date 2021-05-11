@@ -2,7 +2,6 @@ import axios from "axios";
 import { APIGatewayProxyHandler } from "aws-lambda";
 
 const API_BASE_URL = "https://otter.ai/forward/api/v1";
-const AWS_S3_URL = "https://s3.us-west-2.amazonaws.com";
 const CSRF_COOKIE_NAME = "csrftoken";
 
 const getCookieValueAndHeader = (cookieHeader: string, cookieName: string) => {
@@ -12,11 +11,9 @@ const getCookieValueAndHeader = (cookieHeader: string, cookieName: string) => {
 class OtterApi {
   private options: { email: string; password: string };
   private user: { id?: string };
-  private csrfToken: string;
   constructor(options: { email: string; password: string }) {
     this.options = options;
     this.user = {};
-    this.csrfToken = "";
   }
 
   init = async () => {
@@ -60,10 +57,6 @@ class OtterApi {
     });
 
     const cookieHeader = `${response.headers["set-cookie"][0]}; ${response.headers["set-cookie"][1]}`;
-    ({ cookieValue: this.csrfToken } = getCookieValueAndHeader(
-      response.headers["set-cookie"][0],
-      CSRF_COOKIE_NAME
-    ));
 
     this.user = response.data.user;
 
