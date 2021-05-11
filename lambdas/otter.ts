@@ -17,10 +17,10 @@ class OtterApi {
   }
 
   init = async () => {
-    await this.#login();
+    await this.login();
   };
 
-  #login = async () => {
+  login = async () => {
     const { email, password } = this.options;
 
     if (!email || !password) {
