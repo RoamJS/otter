@@ -144,11 +144,21 @@ const ImportOtterDialog = ({
                       } (${new Date(
                         r.data.createdDate * 1000
                       ).toLocaleString()})`,
-                      children: r.data.transcripts.map((t) => ({
-                        text: `${offsetToTimestamp(
-                          t.start
-                        )} - ${offsetToTimestamp(t.end)} - ${t.text}`,
-                      })),
+                      children: [
+                        ...r.data.transcripts.slice(0, 295).map((t) => ({
+                          text: `${offsetToTimestamp(
+                            t.start
+                          )} - ${offsetToTimestamp(t.end)} - ${t.text}`,
+                        })),
+                        ...(r.data.transcripts.length > 295
+                          ? [
+                              {
+                                text:
+                                  "Roam currently only allows 300 blocks to be created at once. If you need larger transcripts to be imported, please reach out to support@roamjs.com!",
+                              },
+                            ]
+                          : []),
+                      ],
                     },
                     order,
                   });
