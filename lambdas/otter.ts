@@ -136,6 +136,7 @@ export const handler: APIGatewayProxyHandler = (event) => {
             text: t.transcript,
             start: t.start_offset,
             end: t.end_ofset,
+            t,
           })),
           ...transform(speech),
         }),

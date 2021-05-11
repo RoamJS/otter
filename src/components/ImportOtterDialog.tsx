@@ -6,11 +6,14 @@ import {
   Radio,
   RadioGroup,
   Spinner,
+  SpinnerSize,
 } from "@blueprintjs/core";
 import axios from "axios";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createBlock,
+  deleteBlock,
+  getOrderByBlockUid,
   getParentUidByBlockUid,
   getTreeByPageName,
 } from "roam-client";
@@ -23,7 +26,10 @@ type DialogProps = {
   blockUid: string;
 };
 
-const offsetToTimestamp = (offset: number) => {
+const offsetToTimestamp = (offset?: number) => {
+  if (!offset) {
+    return "00:00";
+  }
   const totalSeconds = Math.round(offset / 1000);
   const seconds = totalSeconds % 60;
   const minutes = Math.floor(totalSeconds / 60);
@@ -55,13 +61,17 @@ const ImportOtterDialog = ({
       .then((r) => setSpeeches(r.data.speeches))
       .finally(() => setLoading(false));
   }, [setSpeeches]);
+  const onDeleteClose = useCallback(() => {
+    onClose();
+    deleteBlock(blockUid);
+  }, [blockUid, onClose]);
   return (
     <Dialog
       isOpen={true}
       canEscapeKeyClose
       canOutsideClickClose
       title={"Import Otter Speech"}
-      onClose={onClose}
+      onClose={onDeleteClose}
     >
       <div className={Classes.DIALOG_BODY}>
         <RadioGroup
@@ -74,9 +84,10 @@ const ImportOtterDialog = ({
               key={s.id}
               labelElement={
                 <span>
-                  <b>{s.title || "Untitled"}</b> - <span>{s.summary}</span>{" "}
-                  <span style={{ fontSize: 8 }}>
-                    {new Date(s.createdDate).toISOString()}
+                  <b>{s.title || "Untitled"}</b> -{" "}
+                  <span style={{ fontWeight: 400 }}>{s.summary}</span>{" "}
+                  <span style={{ fontSize: 8, fontWeight: 400 }}>
+                    ({new Date(s.createdDate * 1000).toLocaleString()})
                   </span>
                 </span>
               }
@@ -104,7 +115,7 @@ const ImportOtterDialog = ({
       </div>
       <div className={Classes.DIALOG_FOOTER}>
         <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-          {loading && <Spinner />}
+          {loading && <Spinner size={SpinnerSize.SMALL} />}
           <Button
             disabled={loading || !value}
             text={"Import"}
@@ -124,19 +135,24 @@ const ImportOtterDialog = ({
                 })
                 .then((r) => {
                   const parentUid = getParentUidByBlockUid(blockUid);
+                  const order = getOrderByBlockUid(blockUid);
                   createBlock({
                     parentUid,
                     node: {
                       text: `${r.data.title || "Untitled"} - ${
                         r.data.summary
-                      } (${new Date(r.data.createdDate).toISOString()})`,
+                      } (${new Date(
+                        r.data.createdDate * 1000
+                      ).toLocaleString()})`,
                       children: r.data.transcripts.map((t) => ({
                         text: `${offsetToTimestamp(
                           t.start
                         )} - ${offsetToTimestamp(t.end)} - ${t.text}`,
                       })),
                     },
+                    order,
                   });
+                  onDeleteClose();
                 });
             }}
           />
