@@ -2,6 +2,9 @@ name: Publish Extension
 on:
   push:
     branches: main
+    paths:
+      - "src/*"
+      - ".github/workflows/main.yaml"
 
 jobs:
   deploy:
