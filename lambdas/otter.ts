@@ -4,6 +4,13 @@ import { APIGatewayProxyHandler } from "aws-lambda";
 const API_BASE_URL = "https://otter.ai/forward/api/v1";
 const CSRF_COOKIE_NAME = "csrftoken";
 
+type OtterSpeech = {
+  speech_id: string;
+  title: string;
+  created_at: number;
+  summary: string;
+};
+
 const getCookieValueAndHeader = (cookieHeader: string, cookieName: string) => {
   const match = cookieHeader.match(new RegExp(`${cookieName}=(?<value>.*?);`));
   return { cookieValue: match[1], cookieHeader: match[0] };
@@ -67,7 +74,7 @@ class OtterApi {
     return response;
   };
 
-  getSpeeches = async (): Promise<{ speech_id: string; title: string }[]> => {
+  getSpeeches = async (): Promise<OtterSpeech[]> => {
     const { data } = await axios({
       method: "GET",
       url: `${API_BASE_URL}/speeches`,
@@ -93,8 +100,15 @@ class OtterApi {
   };
 }
 
+const transform = (s: OtterSpeech) => ({
+  title: s.title,
+  id: s.speech_id,
+  createdDate: s.created_at,
+  summary: s.summary,
+});
+
 export const handler: APIGatewayProxyHandler = (event) => {
-  const { email, password, operation } = JSON.parse(event.body || "{}");
+  const { email, password, operation, params } = JSON.parse(event.body || "{}");
   const otterApi = new OtterApi({ email, password });
   if (operation === "GET_SPEECHES") {
     return otterApi
@@ -103,7 +117,27 @@ export const handler: APIGatewayProxyHandler = (event) => {
       .then((speeches) => ({
         statusCode: 200,
         body: JSON.stringify({
-          speeches: speeches.map((s) => ({ title: s.title, id: s.speech_id })),
+          speeches: speeches.map(transform),
+        }),
+        headers: {
+          "Access-Control-Allow-Origin": "https://roamresearch.com",
+          "Access-Control-Allow-Methods": "POST",
+          "Access-Control-Allow-Credentials": true,
+        },
+      }));
+  } else if (operation === "GET_SPEECH") {
+    return otterApi
+      .init()
+      .then(() => otterApi.getSpeech(params.id))
+      .then((speech) => ({
+        statusCode: 200,
+        body: JSON.stringify({
+          transcripts: speech.transcripts.map((t) => ({
+            text: t.transcript,
+            start: t.start_offset,
+            end: t.end_ofset,
+          })),
+          ...transform(speech),
         }),
         headers: {
           "Access-Control-Allow-Origin": "https://roamresearch.com",

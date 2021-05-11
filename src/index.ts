@@ -1,3 +1,4 @@
+import { addBlockCommand } from "roam-client";
 import { createConfigObserver } from "roamjs-components";
 import { render } from "./components/ImportOtterDialog";
 
@@ -26,7 +27,7 @@ createConfigObserver({
   },
 });
 
-window.roamAlphaAPI.ui.commandPalette.addCommand({
+addBlockCommand({
   label: "Import Otter",
-  callback: () => render({}),
+  callback: (blockUid) => render({ blockUid }),
 });
