@@ -9,6 +9,7 @@ type OtterSpeech = {
   title: string;
   created_at: number;
   summary: string;
+  otid: string;
 };
 
 const getCookieValueAndHeader = (cookieHeader: string, cookieName: string) => {
@@ -105,6 +106,7 @@ const transform = (s: OtterSpeech) => ({
   id: s.speech_id,
   createdDate: s.created_at,
   summary: s.summary,
+  link: `https://otter.ai/u/${s.otid}`
 });
 
 export const handler: APIGatewayProxyHandler = (event) => {

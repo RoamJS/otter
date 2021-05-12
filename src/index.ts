@@ -20,6 +20,16 @@ createConfigObserver({
             title: "password",
             description: "The password needed to access your Otter account",
           },
+          {
+            type: "text",
+            title: "label",
+            description: "The format labels use on import",
+          },
+          {
+            type: "text",
+            title: "template",
+            description: "The format each Otter note/transcript uses on import",
+          },
         ],
         id: "home",
       },

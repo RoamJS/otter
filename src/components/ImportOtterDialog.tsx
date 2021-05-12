@@ -42,11 +42,21 @@ const ImportOtterDialog = ({
 }: {
   onClose: () => void;
 } & DialogProps) => {
-  const otterCredentials = useMemo(() => {
+  const { otterCredentials, label, template } = useMemo(() => {
     const tree = getTreeByPageName("roam/js/otter");
     const email = getSettingValueFromTree({ tree, key: "email" });
     const password = getSettingValueFromTree({ tree, key: "password" });
-    return { email, password };
+    const label = getSettingValueFromTree({
+      tree,
+      key: "label",
+      defaultValue: `{title} - {summary} ({created-date})`,
+    });
+    const template = getSettingValueFromTree({
+      tree,
+      key: "template",
+      defaultValue: `{start} - {end} - {text}`,
+    });
+    return { otterCredentials: { email, password }, label, template };
   }, []);
   const [speeches, setSpeeches] = useState([]);
   const [value, setValue] = useState("");
@@ -127,6 +137,7 @@ const ImportOtterDialog = ({
                   title: string;
                   summary: string;
                   createdDate: number;
+                  link: string;
                   transcripts: { start: number; end: number; text: string }[];
                 }>("https://lambda.roamjs.com/otter", {
                   ...otterCredentials,
@@ -139,22 +150,25 @@ const ImportOtterDialog = ({
                   createBlock({
                     parentUid,
                     node: {
-                      text: `${r.data.title || "Untitled"} - ${
-                        r.data.summary
-                      } (${new Date(
-                        r.data.createdDate * 1000
-                      ).toLocaleString()})`,
+                      text: label
+                        .replace(/{title}/gi, r.data.title || "Untitled")
+                        .replace(/{summary}/gi, r.data.summary)
+                        .replace(
+                          /{created-date}/gi,
+                          new Date(r.data.createdDate * 1000).toLocaleString()
+                        )
+                        .replace(/{link}/gi, r.data.link),
                       children: [
                         ...r.data.transcripts.slice(0, 295).map((t) => ({
-                          text: `${offsetToTimestamp(
-                            t.start
-                          )} - ${offsetToTimestamp(t.end)} - ${t.text}`,
+                          text: template
+                            .replace(/{start}/gi, offsetToTimestamp(t.start))
+                            .replace(/{end}/gi, offsetToTimestamp(t.end))
+                            .replace(/{text}/gi, t.text),
                         })),
                         ...(r.data.transcripts.length > 295
                           ? [
                               {
-                                text:
-                                  "Roam currently only allows 300 blocks to be created at once. If you need larger transcripts to be imported, please reach out to support@roamjs.com!",
+                                text: "Roam currently only allows 300 blocks to be created at once. If you need larger transcripts to be imported, please reach out to support@roamjs.com!",
                               },
                             ]
                           : []),
