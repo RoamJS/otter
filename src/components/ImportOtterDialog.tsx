@@ -62,15 +62,39 @@ const ImportOtterDialog = ({
   const [value, setValue] = useState("");
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
+  const [lastLoad, setLastLoad] = useState(0);
+  const [lastModified, setLastModified] = useState(0);
+  const [isEnd, setIsEnd] = useState(false);
   useEffect(() => {
-    axios
-      .post("https://lambda.roamjs.com/otter", {
-        ...otterCredentials,
-        operation: "GET_SPEECHES",
-      })
-      .then((r) => setSpeeches(r.data.speeches))
-      .finally(() => setLoading(false));
-  }, [setSpeeches]);
+    if (loading) {
+      axios
+        .post("https://lambda.roamjs.com/otter", {
+          ...otterCredentials,
+          operation: "GET_SPEECHES",
+          params: { lastLoad, lastModified },
+        })
+        .then((r) => {
+          setLoading(false);
+          if (!isEnd) {
+            setSpeeches([...speeches, ...r.data.speeches]);
+            setLastLoad(r.data.lastLoad);
+            setLastModified(r.data.lastModified);
+            setIsEnd(r.data.isEnd);
+          }
+        })
+        .catch(() => setLoading(false));
+    }
+  }, [
+    setSpeeches,
+    lastLoad,
+    lastModified,
+    speeches,
+    isEnd,
+    setLastModified,
+    setLastLoad,
+    setIsEnd,
+    loading,
+  ]);
   const onDeleteClose = useCallback(() => {
     onClose();
     deleteBlock(blockUid);
@@ -118,8 +142,13 @@ const ImportOtterDialog = ({
           />
           <Button
             text={"Next"}
-            disabled={page + 10 > speeches.length}
-            onClick={() => setPage(page + 10)}
+            disabled={isEnd && page + 10 >= speeches.length}
+            onClick={() => {
+              setPage(page + 10);
+              if (!isEnd && page + 10 >= speeches.length) {
+                setLoading(true);
+              }
+            }}
           />
         </div>
       </div>
