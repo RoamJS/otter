@@ -40,13 +40,11 @@ class OtterApi {
       method: "GET",
       url: `${API_BASE_URL}/login_csrf`,
     });
-    const {
-      cookieValue: csrfToken,
-      cookieHeader: csrfCookie,
-    } = getCookieValueAndHeader(
-      csrfResponse.headers["set-cookie"][0],
-      CSRF_COOKIE_NAME
-    );
+    const { cookieValue: csrfToken, cookieHeader: csrfCookie } =
+      getCookieValueAndHeader(
+        csrfResponse.headers["set-cookie"][0],
+        CSRF_COOKIE_NAME
+      );
 
     const response = await axios({
       method: "GET",
@@ -75,16 +73,23 @@ class OtterApi {
     return response;
   };
 
-  getSpeeches = async (): Promise<OtterSpeech[]> => {
+  getSpeeches = async (
+    params: string
+  ): Promise<{
+    speeches: OtterSpeech[];
+    end_of_list: boolean;
+    last_load_ts: number;
+    last_modified_at: number;
+  }> => {
     const { data } = await axios({
       method: "GET",
-      url: `${API_BASE_URL}/speeches`,
+      url: `${API_BASE_URL}/speeches?page_size=10${params}`,
       params: {
         userid: this.user.id,
       },
     });
 
-    return data.speeches;
+    return data;
   };
 
   getSpeech = async (speech_id: string) => {
@@ -106,7 +111,7 @@ const transform = (s: OtterSpeech) => ({
   id: s.speech_id,
   createdDate: s.created_at,
   summary: s.summary,
-  link: `https://otter.ai/u/${s.otid}`
+  link: `https://otter.ai/u/${s.otid}`,
 });
 
 export const handler: APIGatewayProxyHandler = (event) => {
@@ -115,11 +120,20 @@ export const handler: APIGatewayProxyHandler = (event) => {
   if (operation === "GET_SPEECHES") {
     return otterApi
       .init()
-      .then(() => otterApi.getSpeeches())
-      .then((speeches) => ({
+      .then(() =>
+        otterApi.getSpeeches(
+          params?.lastLoad && params?.lastModified
+            ? `&modified_after=${params.lastModified}&last_load_ts=${params.lastLoad}`
+            : ""
+        )
+      )
+      .then(({ speeches, last_load_ts, last_modified_at, end_of_list }) => ({
         statusCode: 200,
         body: JSON.stringify({
           speeches: speeches.map(transform),
+          lastLoad: last_load_ts,
+          lastModified: last_modified_at,
+          isEnd: end_of_list,
         }),
         headers: {
           "Access-Control-Allow-Origin": "https://roamresearch.com",
