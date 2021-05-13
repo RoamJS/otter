@@ -60,13 +60,14 @@ const ImportOtterDialog = ({
   }, []);
   const [speeches, setSpeeches] = useState([]);
   const [value, setValue] = useState("");
+  const [initialLoading, setInitialLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [lastLoad, setLastLoad] = useState(0);
   const [lastModified, setLastModified] = useState(0);
   const [isEnd, setIsEnd] = useState(false);
   useEffect(() => {
-    if (loading) {
+    if (initialLoading) {
       axios
         .post("https://lambda.roamjs.com/otter", {
           ...otterCredentials,
@@ -74,7 +75,7 @@ const ImportOtterDialog = ({
           params: { lastLoad, lastModified },
         })
         .then((r) => {
-          setLoading(false);
+          setInitialLoading(false);
           if (!isEnd) {
             setSpeeches([...speeches, ...r.data.speeches]);
             setLastLoad(r.data.lastLoad);
@@ -82,7 +83,7 @@ const ImportOtterDialog = ({
             setIsEnd(r.data.isEnd);
           }
         })
-        .catch(() => setLoading(false));
+        .catch(() => setInitialLoading(false));
     }
   }, [
     setSpeeches,
@@ -93,7 +94,8 @@ const ImportOtterDialog = ({
     setLastModified,
     setLastLoad,
     setIsEnd,
-    loading,
+    setInitialLoading,
+    initialLoading,
   ]);
   const onDeleteClose = useCallback(() => {
     onClose();
@@ -146,7 +148,7 @@ const ImportOtterDialog = ({
             onClick={() => {
               setPage(page + 10);
               if (!isEnd && page + 10 >= speeches.length) {
-                setLoading(true);
+                setInitialLoading(true);
               }
             }}
           />
@@ -154,7 +156,7 @@ const ImportOtterDialog = ({
       </div>
       <div className={Classes.DIALOG_FOOTER}>
         <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-          {loading && <Spinner size={SpinnerSize.SMALL} />}
+          {(loading || initialLoading) && <Spinner size={SpinnerSize.SMALL} />}
           <Button
             disabled={loading || !value}
             text={"Import"}
