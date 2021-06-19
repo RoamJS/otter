@@ -21,6 +21,7 @@ import {
   createOverlayRender,
   getSettingValueFromTree,
 } from "roamjs-components";
+import format from "date-fns/format";
 
 type DialogProps = {
   blockUid: string;
@@ -184,9 +185,12 @@ const ImportOtterDialog = ({
                       text: label
                         .replace(/{title}/gi, r.data.title || "Untitled")
                         .replace(/{summary}/gi, r.data.summary)
-                        .replace(
-                          /{created-date}/gi,
-                          new Date(r.data.createdDate * 1000).toLocaleString()
+                        .replace(/{created-date(?::(.*?))?}/gi, (_, i) =>
+                          i
+                            ? format(new Date(r.data.createdDate * 1000), i)
+                            : new Date(
+                                r.data.createdDate * 1000
+                              ).toLocaleString()
                         )
                         .replace(/{link}/gi, r.data.link),
                       children: [
