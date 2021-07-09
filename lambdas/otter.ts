@@ -152,6 +152,9 @@ export const handler: APIGatewayProxyHandler = (event) => {
             text: t.transcript,
             start: t.start_offset,
             end: t.end_offset,
+            speaker:
+              speech.speakers.find((s) => s.id === t.speaker_id)
+                ?.speaker_name || "Unknown",
           })),
           ...transform(speech),
         }),

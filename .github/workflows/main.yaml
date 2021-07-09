@@ -6,6 +6,9 @@ on:
       - "src/**"
       - ".github/workflows/main.yaml"
 
+env:
+  API_URL: https://lambda.roamjs.com
+
 jobs:
   deploy:
     runs-on: ubuntu-latest

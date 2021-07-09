@@ -70,7 +70,7 @@ const ImportOtterDialog = ({
   useEffect(() => {
     if (initialLoading) {
       axios
-        .post("https://lambda.roamjs.com/otter", {
+        .post(`${process.env.API_URL}/otter`, {
           ...otterCredentials,
           operation: "GET_SPEECHES",
           params: { lastLoad, lastModified },
@@ -170,8 +170,13 @@ const ImportOtterDialog = ({
                   summary: string;
                   createdDate: number;
                   link: string;
-                  transcripts: { start: number; end: number; text: string }[];
-                }>("https://lambda.roamjs.com/otter", {
+                  transcripts: {
+                    start: number;
+                    end: number;
+                    text: string;
+                    speaker: string;
+                  }[];
+                }>(`${process.env.API_URL}/otter`, {
                   ...otterCredentials,
                   operation: "GET_SPEECH",
                   params: { id: value },
@@ -198,7 +203,8 @@ const ImportOtterDialog = ({
                           text: template
                             .replace(/{start}/gi, offsetToTimestamp(t.start))
                             .replace(/{end}/gi, offsetToTimestamp(t.end))
-                            .replace(/{text}/gi, t.text),
+                            .replace(/{text}/gi, t.text)
+                            .replace(/{speaker}/, t.speaker),
                         })),
                         ...(r.data.transcripts.length > 295
                           ? [
