@@ -204,7 +204,16 @@ const ImportOtterDialog = ({
                             .replace(/{start}/gi, offsetToTimestamp(t.start))
                             .replace(/{end}/gi, offsetToTimestamp(t.end))
                             .replace(/{text}/gi, t.text)
-                            .replace(/{speaker}/, t.speaker),
+                            .replace(/{speaker(:initials)?}/gi, (_, i) =>
+                              i
+                                ? t.speaker
+                                    .split(" ")
+                                    .map(
+                                      (s) => `${s.slice(0, 1).toUpperCase()}.`
+                                    )
+                                    .join("")
+                                : t.speaker
+                            ),
                         })),
                         ...(r.data.transcripts.length > 295
                           ? [
