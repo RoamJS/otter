@@ -34,6 +34,7 @@ createConfigObserver({
         id: "home",
       },
     ],
+    versioning: true,
   },
 });
 
