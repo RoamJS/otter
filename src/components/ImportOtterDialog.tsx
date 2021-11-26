@@ -34,8 +34,11 @@ const offsetToTimestamp = (offset?: number) => {
   const totalSeconds = Math.round(offset / 1000);
   const seconds = totalSeconds % 60;
   const minutes = Math.floor(totalSeconds / 60);
-  return `${minutes}:${seconds}`;
+  return `${minutes}:${`${seconds}`.padStart(2, '0')}`;
 };
+
+export const DEFAULT_LABEL = `{title} - {summary} ({created-date})`;
+export const DEFAULT_TEMPLATE = `{start} - {end} - {text}`;
 
 const ImportOtterDialog = ({
   onClose,
@@ -50,12 +53,12 @@ const ImportOtterDialog = ({
     const label = getSettingValueFromTree({
       tree,
       key: "label",
-      defaultValue: `{title} - {summary} ({created-date})`,
+      defaultValue: DEFAULT_LABEL,
     });
     const template = getSettingValueFromTree({
       tree,
       key: "template",
-      defaultValue: `{start} - {end} - {text}`,
+      defaultValue: DEFAULT_TEMPLATE,
     });
     return { otterCredentials: { email, password }, label, template };
   }, []);
