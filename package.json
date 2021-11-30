@@ -7,7 +7,9 @@
     "build": "roamjs-scripts build",
     "dev": "roamjs-scripts dev",
     "lambdas": "roamjs-scripts lambdas",
-    "server": "localhost-lambdas"
+    "preserver": "roamjs-scripts lambdas --build",
+    "server": "localhost-lambdas",
+    "start": "concurrently npm:dev npm:server"
   },
   "license": "MIT",
   "devDependencies": {
@@ -15,6 +17,7 @@
     "@types/react-dom": "^17.0.3",
     "@types/xml2js": "^0.4.8",
     "aws-lambda": "^1.0.6",
+    "concurrently": "^6.4.0",
     "localhost-lambdas": "^0.2.14",
     "roamjs-scripts": "^0.9.12",
     "typescript": "^4.2.4"

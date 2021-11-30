@@ -13,6 +13,8 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createBlock,
   deleteBlock,
+  getBasicTreeByParentUid,
+  getChildrenLengthByPageUid,
   getOrderByBlockUid,
   getParentUidByBlockUid,
   getTreeByPageName,
@@ -20,11 +22,15 @@ import {
 import {
   createOverlayRender,
   getSettingValueFromTree,
+  getSubTree,
+  setInputSetting,
+  useSubTree,
 } from "roamjs-components";
 import format from "date-fns/format";
 
 type DialogProps = {
   blockUid: string;
+  pageUid: string;
 };
 
 const offsetToTimestamp = (offset?: number) => {
@@ -34,20 +40,108 @@ const offsetToTimestamp = (offset?: number) => {
   const totalSeconds = Math.round(offset / 1000);
   const seconds = totalSeconds % 60;
   const minutes = Math.floor(totalSeconds / 60);
-  return `${minutes}:${`${seconds}`.padStart(2, '0')}`;
+  return `${minutes}:${`${seconds}`.padStart(2, "0")}`;
 };
 
 export const DEFAULT_LABEL = `{title} - {summary} ({created-date})`;
 export const DEFAULT_TEMPLATE = `{start} - {end} - {text}`;
+export const importSpeech = ({
+  credentials,
+  id,
+  order,
+  parentUid,
+  label,
+  template,
+  onSuccess,
+  configUid,
+}: {
+  credentials: { email: string; password: string };
+  id: string;
+  order: number;
+  parentUid: string;
+  label: string;
+  template: string;
+  onSuccess?: () => void;
+  configUid: string;
+}) =>
+  axios
+    .post<{
+      title: string;
+      summary: string;
+      createdDate: number;
+      link: string;
+      transcripts: {
+        start: number;
+        end: number;
+        text: string;
+        speaker: string;
+      }[];
+    }>(`${process.env.API_URL}/otter`, {
+      ...credentials,
+      operation: "GET_SPEECH",
+      params: { id },
+    })
+    .then((r) => {
+      const newBlockUid = window.roamAlphaAPI.util.generateUID();
+      const node = {
+        uid: newBlockUid,
+        text: label
+          .replace(/{title}/gi, r.data.title || "Untitled")
+          .replace(/{summary}/gi, r.data.summary)
+          .replace(/{created-date(?::(.*?))?}/gi, (_, i) =>
+            i
+              ? format(new Date(r.data.createdDate * 1000), i)
+              : new Date(r.data.createdDate * 1000).toLocaleString()
+          )
+          .replace(/{link}/gi, r.data.link),
+        children: [
+          ...r.data.transcripts.slice(0, 295).map((t) => ({
+            text: template
+              .replace(/{start}/gi, offsetToTimestamp(t.start))
+              .replace(/{end}/gi, offsetToTimestamp(t.end))
+              .replace(/{text}/gi, t.text)
+              .replace(/{speaker(:initials)?}/gi, (_, i) =>
+                i
+                  ? t.speaker
+                      .split(" ")
+                      .map((s) => `${s.slice(0, 1).toUpperCase()}.`)
+                      .join("")
+                  : t.speaker
+              ),
+          })),
+          ...(r.data.transcripts.length > 295
+            ? [
+                {
+                  text: "Roam currently only allows 300 blocks to be created at once. If you need larger transcripts to be imported, please reach out to support@roamjs.com!",
+                },
+              ]
+            : []),
+        ],
+      };
+      const { uid: idsUid } = getSubTree({ key: "ids", parentUid: configUid });
+      setInputSetting({ blockUid: idsUid, key: id, value: newBlockUid });
+      if (onSuccess) {
+        createBlock({
+          parentUid,
+          node,
+          order,
+        });
+        onSuccess();
+        return [];
+      } else {
+        return [node];
+      }
+    });
 
 const ImportOtterDialog = ({
   onClose,
   blockUid,
+  pageUid,
 }: {
   onClose: () => void;
 } & DialogProps) => {
   const { otterCredentials, label, template } = useMemo(() => {
-    const tree = getTreeByPageName("roam/js/otter");
+    const tree = getBasicTreeByParentUid(pageUid);
     const email = getSettingValueFromTree({ tree, key: "email" });
     const password = getSettingValueFromTree({ tree, key: "password" });
     const label = getSettingValueFromTree({
@@ -167,70 +261,16 @@ const ImportOtterDialog = ({
             intent={Intent.PRIMARY}
             onClick={() => {
               setLoading(true);
-              axios
-                .post<{
-                  title: string;
-                  summary: string;
-                  createdDate: number;
-                  link: string;
-                  transcripts: {
-                    start: number;
-                    end: number;
-                    text: string;
-                    speaker: string;
-                  }[];
-                }>(`${process.env.API_URL}/otter`, {
-                  ...otterCredentials,
-                  operation: "GET_SPEECH",
-                  params: { id: value },
-                })
-                .then((r) => {
-                  const parentUid = getParentUidByBlockUid(blockUid);
-                  const order = getOrderByBlockUid(blockUid);
-                  createBlock({
-                    parentUid,
-                    node: {
-                      text: label
-                        .replace(/{title}/gi, r.data.title || "Untitled")
-                        .replace(/{summary}/gi, r.data.summary)
-                        .replace(/{created-date(?::(.*?))?}/gi, (_, i) =>
-                          i
-                            ? format(new Date(r.data.createdDate * 1000), i)
-                            : new Date(
-                                r.data.createdDate * 1000
-                              ).toLocaleString()
-                        )
-                        .replace(/{link}/gi, r.data.link),
-                      children: [
-                        ...r.data.transcripts.slice(0, 295).map((t) => ({
-                          text: template
-                            .replace(/{start}/gi, offsetToTimestamp(t.start))
-                            .replace(/{end}/gi, offsetToTimestamp(t.end))
-                            .replace(/{text}/gi, t.text)
-                            .replace(/{speaker(:initials)?}/gi, (_, i) =>
-                              i
-                                ? t.speaker
-                                    .split(" ")
-                                    .map(
-                                      (s) => `${s.slice(0, 1).toUpperCase()}.`
-                                    )
-                                    .join("")
-                                : t.speaker
-                            ),
-                        })),
-                        ...(r.data.transcripts.length > 295
-                          ? [
-                              {
-                                text: "Roam currently only allows 300 blocks to be created at once. If you need larger transcripts to be imported, please reach out to support@roamjs.com!",
-                              },
-                            ]
-                          : []),
-                      ],
-                    },
-                    order,
-                  });
-                  onDeleteClose();
-                });
+              importSpeech({
+                credentials: otterCredentials,
+                id: value,
+                parentUid: getParentUidByBlockUid(blockUid),
+                label,
+                template,
+                onSuccess: onDeleteClose,
+                configUid: pageUid,
+                order: getOrderByBlockUid(blockUid),
+              });
             }}
           />
         </div>
