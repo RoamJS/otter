@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { APIGatewayProxyHandler } from "aws-lambda";
 
 const API_BASE_URL = "https://otter.ai/forward/api/v1";
@@ -106,6 +106,21 @@ class OtterApi {
   };
 }
 
+const headers = {
+  "Access-Control-Allow-Origin": "https://roamresearch.com",
+  "Access-Control-Allow-Methods": "POST",
+  "Access-Control-Allow-Credentials": true,
+};
+
+const catchError = (e: AxiosError) => {
+  console.error(e.response?.data || e.message);
+  return {
+    headers,
+    statusCode: 500,
+    body: e.response?.data?.message || e.response?.data || e.message,
+  };
+};
+
 const transform = (s: OtterSpeech) => ({
   title: s.title,
   id: s.speech_id,
@@ -135,12 +150,9 @@ export const handler: APIGatewayProxyHandler = (event) => {
           lastModified: last_modified_at,
           isEnd: end_of_list,
         }),
-        headers: {
-          "Access-Control-Allow-Origin": "https://roamresearch.com",
-          "Access-Control-Allow-Methods": "POST",
-          "Access-Control-Allow-Credentials": true,
-        },
-      }));
+        headers,
+      }))
+      .catch(catchError);
   } else if (operation === "GET_SPEECH") {
     return otterApi
       .init()
@@ -158,12 +170,9 @@ export const handler: APIGatewayProxyHandler = (event) => {
           })),
           ...transform(speech),
         }),
-        headers: {
-          "Access-Control-Allow-Origin": "https://roamresearch.com",
-          "Access-Control-Allow-Methods": "POST",
-          "Access-Control-Allow-Credentials": true,
-        },
-      }));
+        headers,
+      }))
+      .catch(catchError);
   } else {
     return {
       statusCode: 400,

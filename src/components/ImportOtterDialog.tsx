@@ -159,6 +159,7 @@ const ImportOtterDialog = ({
   const [speeches, setSpeeches] = useState([]);
   const [value, setValue] = useState("");
   const [initialLoading, setInitialLoading] = useState(true);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [lastLoad, setLastLoad] = useState(0);
@@ -166,6 +167,7 @@ const ImportOtterDialog = ({
   const [isEnd, setIsEnd] = useState(false);
   useEffect(() => {
     if (initialLoading) {
+      setError("");
       axios
         .post(`${process.env.API_URL}/otter`, {
           ...otterCredentials,
@@ -181,7 +183,10 @@ const ImportOtterDialog = ({
             setIsEnd(r.data.isEnd);
           }
         })
-        .catch(() => setInitialLoading(false));
+        .catch((e) => {
+          setError(e.response?.data || e.message);
+          setInitialLoading(false);
+        });
     }
   }, [
     setSpeeches,
@@ -194,6 +199,7 @@ const ImportOtterDialog = ({
     setIsEnd,
     setInitialLoading,
     initialLoading,
+    setError,
   ]);
   const onDeleteClose = useCallback(() => {
     onClose();
@@ -255,6 +261,7 @@ const ImportOtterDialog = ({
       <div className={Classes.DIALOG_FOOTER}>
         <div className={Classes.DIALOG_FOOTER_ACTIONS}>
           {(loading || initialLoading) && <Spinner size={SpinnerSize.SMALL} />}
+          <span style={{ color: "darkred" }}>{error}</span>
           <Button
             disabled={loading || !value}
             text={"Import"}
