@@ -14,19 +14,18 @@ import {
   createBlock,
   deleteBlock,
   getBasicTreeByParentUid,
-  getChildrenLengthByPageUid,
   getOrderByBlockUid,
   getParentUidByBlockUid,
-  getTreeByPageName,
-} from "roam-client";
+  toRoamDate,
+} from "roam-client"
 import {
   createOverlayRender,
   getSettingValueFromTree,
   getSubTree,
   setInputSetting,
-  useSubTree,
 } from "roamjs-components";
 import format from "date-fns/format";
+import {addDays} from "../date"
 
 type DialogProps = {
   blockUid: string;
@@ -42,6 +41,11 @@ const offsetToTimestamp = (offset?: number) => {
   const minutes = Math.floor(totalSeconds / 60);
   return `${minutes}:${`${seconds}`.padStart(2, "0")}`;
 };
+
+const replaceDateSubstitutions = (text: string) =>
+    text.replace(/{today}/gi, `[[${toRoamDate(new Date())}]]`)
+    .replace(/{tomorrow}/gi, `[[${toRoamDate(addDays(new Date(), 1))}]]`)
+
 
 export const DEFAULT_LABEL = `{title} - {summary} ({created-date})`;
 export const DEFAULT_TEMPLATE = `{start} - {end} - {text}`;
@@ -83,32 +87,36 @@ export const importSpeech = ({
     })
     .then((r) => {
       const newBlockUid = window.roamAlphaAPI.util.generateUID();
-      const node = {
-        uid: newBlockUid,
-        text: label
+      let labelWithReplacements = label
           .replace(/{title}/gi, r.data.title || "Untitled")
           .replace(/{summary}/gi, r.data.summary)
           .replace(/{created-date(?::(.*?))?}/gi, (_, i) =>
-            i
-              ? format(new Date(r.data.createdDate * 1000), i)
-              : new Date(r.data.createdDate * 1000).toLocaleString()
+              i
+                  ? format(new Date(r.data.createdDate * 1000), i)
+                  : new Date(r.data.createdDate * 1000).toLocaleString()
           )
-          .replace(/{link}/gi, r.data.link),
+          .replace(/{link}/gi, r.data.link)
+
+      const node = {
+        uid: newBlockUid,
+        text: replaceDateSubstitutions(labelWithReplacements),
         children: [
-          ...r.data.transcripts.slice(0, 295).map((t) => ({
-            text: template
-              .replace(/{start}/gi, offsetToTimestamp(t.start))
-              .replace(/{end}/gi, offsetToTimestamp(t.end))
-              .replace(/{text}/gi, t.text)
-              .replace(/{speaker(:initials)?}/gi, (_, i) =>
-                i
-                  ? t.speaker
-                      .split(" ")
-                      .map((s) => `${s.slice(0, 1).toUpperCase()}.`)
-                      .join("")
-                  : t.speaker
-              ),
-          })),
+          ...r.data.transcripts.slice(0, 295).map((t) => {
+            return ({
+              text: replaceDateSubstitutions(template
+                .replace(/{start}/gi, offsetToTimestamp(t.start))
+                .replace(/{end}/gi, offsetToTimestamp(t.end))
+                .replace(/{text}/gi, t.text)
+                .replace(/{speaker(:initials)?}/gi, (_, i) =>
+                    i
+                        ? t.speaker
+                            .split(" ")
+                            .map((s) => `${s.slice(0, 1).toUpperCase()}.`)
+                            .join("")
+                        : t.speaker
+                )),
+            })
+          }),
           ...(r.data.transcripts.length > 295
             ? [
                 {
