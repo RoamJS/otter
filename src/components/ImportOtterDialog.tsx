@@ -10,20 +10,16 @@ import {
 } from "@blueprintjs/core";
 import axios from "axios";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  createBlock,
-  deleteBlock,
-  getBasicTreeByParentUid,
-  getOrderByBlockUid,
-  getParentUidByBlockUid,
-  toRoamDate,
-} from "roam-client"
-import {
-  createOverlayRender,
-  getSettingValueFromTree,
-  getSubTree,
-  setInputSetting,
-} from "roamjs-components";
+import createBlock from "roamjs-components/writes/createBlock";
+import deleteBlock from "roamjs-components/writes/deleteBlock";
+import getBasicTreeByParentUid from "roamjs-components/queries/getBasicTreeByParentUid";
+import getOrderByBlockUid from "roamjs-components/queries/getOrderByBlockUid";
+import getParentUidByBlockUid from "roamjs-components/queries/getParentUidByBlockUid";
+import createOverlayRender from "roamjs-components/util/createOverlayRender";
+import getSettingValueFromTree from "roamjs-components/util/getSettingValueFromTree";
+import getSubTree from "roamjs-components/util/getSubTree";
+import setInputSetting from "roamjs-components/util/setInputSetting";
+import toRoamDate from "roamjs-components/date/toRoamDate";
 import format from "date-fns/format";
 import {addDays} from "../date"
 
@@ -127,17 +123,24 @@ export const importSpeech = ({
         ],
       };
       const { uid: idsUid } = getSubTree({ key: "ids", parentUid: configUid });
-      setInputSetting({ blockUid: idsUid, key: id, value: newBlockUid });
+
       if (onSuccess) {
-        createBlock({
+        return createBlock({
           parentUid,
           node,
           order,
-        });
-        onSuccess();
-        return [];
+        })
+          .then(() =>
+            setInputSetting({ blockUid: idsUid, key: id, value: newBlockUid })
+          )
+          .then(onSuccess)
+          .then(() => []);
       } else {
-        return [node];
+        return setInputSetting({
+          blockUid: idsUid,
+          key: id,
+          value: newBlockUid,
+        }).then(() => [node]);
       }
     });
 

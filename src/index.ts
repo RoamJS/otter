@@ -1,21 +1,16 @@
 import axios from "axios";
-import {
-  addBlockCommand,
-  getBasicTreeByParentUid,
-  getChildrenLengthByPageUid,
-  getCurrentPageUid,
-  getPageTitleByBlockUid,
-  getPageTitleByPageUid,
-  registerSmartBlocksCommand,
-  runExtension,
-  toRoamDateUid,
-} from "roam-client";
-import {
-  createConfigObserver,
-  getSettingValueFromTree,
-  getSubTree,
-  toFlexRegex,
-} from "roamjs-components";
+import addBlockCommand from "roamjs-components/dom/addBlockCommand";
+import getBasicTreeByParentUid from "roamjs-components/queries/getBasicTreeByParentUid";
+import getChildrenLengthByPageUid from "roamjs-components/queries/getChildrenLengthByPageUid";
+import getPageTitleByBlockUid from "roamjs-components/queries/getPageTitleByBlockUid";
+import getPageTitleByPageUid from "roamjs-components/queries/getPageTitleByPageUid";
+import registerSmartBlocksCommand from "roamjs-components/util/registerSmartBlocksCommand";
+import runExtension from "roamjs-components/util/runExtension";
+import toRoamDateUid from "roamjs-components/date/toRoamDateUid";
+import { createConfigObserver } from "roamjs-components/components/ConfigPage";
+import getSettingValueFromTree from "roamjs-components/util/getSettingValueFromTree";
+import getSubTree from "roamjs-components/util/getSubTree";
+import toFlexRegex from "roamjs-components/util/toFlexRegex";
 import {
   DEFAULT_LABEL,
   DEFAULT_TEMPLATE,
@@ -25,8 +20,8 @@ import {
 
 const CONFIG = `roam/js/otter`;
 
-runExtension("otter", () => {
-  const { pageUid } = createConfigObserver({
+runExtension("otter", async () => {
+  const { pageUid } = await createConfigObserver({
     title: CONFIG,
     config: {
       tabs: [
@@ -80,7 +75,7 @@ runExtension("otter", () => {
     const label = getSettingValueFromTree({ tree, key: "label" });
     const template = getSettingValueFromTree({ tree, key: "template" });
     return axios
-      .post<{speeches:{ id: string }[]}>(`${process.env.API_URL}/otter`, {
+      .post<{ speeches: { id: string }[] }>(`${process.env.API_URL}/otter`, {
         email,
         password,
         operation: "GET_SPEECHES",
