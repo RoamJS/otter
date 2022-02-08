@@ -1,5 +1,10 @@
 import axios, { AxiosError } from "axios";
 import { APIGatewayProxyHandler } from "aws-lambda";
+import AES from "crypto-js/aes";
+import encutf8 from "crypto-js/enc-utf8";
+import randomstring from "randomstring";
+import getRoamJSUser from "roamjs-components/backend/getRoamJSUser";
+import putRoamJSUser from "roamjs-components/backend/putRoamJSUser";
 
 const API_BASE_URL = "https://otter.ai/forward/api/v1";
 const CSRF_COOKIE_NAME = "csrftoken";
@@ -129,18 +134,79 @@ const transform = (s: OtterSpeech) => ({
   link: `https://otter.ai/u/${s.otid}`,
 });
 
-export const handler: APIGatewayProxyHandler = (event) => {
+const getApi = ({
+  email,
+  password,
+  token,
+}: {
+  email: string;
+  password: string;
+  token: string;
+}) =>
+  getRoamJSUser(token)
+    .then((data) => AES.decrypt(password, data.key as string).toString(encutf8))
+    .then((password) => {
+      return new OtterApi({
+        email,
+        password,
+      });
+    });
+
+export const handler: APIGatewayProxyHandler = async (event) => {
   const { email, password, operation, params } = JSON.parse(event.body || "{}");
-  const otterApi = new OtterApi({ email, password });
-  if (operation === "GET_SPEECHES") {
-    return otterApi
-      .init()
-      .then(() =>
-        otterApi.getSpeeches(
-          params?.lastLoad && params?.lastModified
-            ? `&modified_after=${params.lastModified}&last_load_ts=${params.lastLoad}`
-            : ""
-        )
+  const token =
+    event.headers.Authorization || event.headers.authorization || "";
+  if (operation === "ENCRYPT_PASSWORD") {
+    // TODO: check for otter and init
+    const inited = await axios
+      .get(
+        `https://lambda.roamjs.com/check?extensionId=otter${
+          process.env.NODE_ENV === "development" ? "&dev=true" : ""
+        }`,
+        { headers: { Authorization: token } }
+      )
+      .then((r) => r.data.success);
+    if (!inited) {
+      await axios.post(
+        `https://lambda.roamjs.com/user?extensionId=otter`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${Buffer.from(
+              `${process.env.ROAMJS_EMAIL}:${process.env.ROAMJS_DEVELOPER_TOKEN}`
+            ).toString("base64")}`,
+            "x-roamjs-token": token,
+            "x-roamjs-extension": "otter",
+            ...(process.env.NODE_ENV === "development"
+              ? {
+                  "x-roamjs-dev": "true",
+                }
+              : {}),
+          },
+        }
+      );
+    }
+
+    const encryptionSecret = randomstring.generate(16);
+    const output = AES.encrypt(password, encryptionSecret).toString();
+    await putRoamJSUser(token, { key: encryptionSecret });
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ output }),
+      headers,
+    };
+  } else if (operation === "GET_SPEECHES") {
+    return getApi({ email, password, token })
+      .then((otterApi) =>
+        otterApi
+          .init()
+          .then(() =>
+            otterApi.getSpeeches(
+              params?.lastLoad && params?.lastModified
+                ? `&modified_after=${params.lastModified}&last_load_ts=${params.lastLoad}`
+                : ""
+            )
+          )
       )
       .then(({ speeches, last_load_ts, last_modified_at, end_of_list }) => ({
         statusCode: 200,
@@ -154,9 +220,10 @@ export const handler: APIGatewayProxyHandler = (event) => {
       }))
       .catch(catchError);
   } else if (operation === "GET_SPEECH") {
-    return otterApi
-      .init()
-      .then(() => otterApi.getSpeech(params.id))
+    return getApi({ email, password, token })
+      .then((otterApi) =>
+        otterApi.init().then(() => otterApi.getSpeech(params.id))
+      )
       .then((speech) => ({
         statusCode: 200,
         body: JSON.stringify({

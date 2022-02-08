@@ -1,4 +1,3 @@
-import axios from "axios";
 import addBlockCommand from "roamjs-components/dom/addBlockCommand";
 import getBasicTreeByParentUid from "roamjs-components/queries/getBasicTreeByParentUid";
 import getChildrenLengthByPageUid from "roamjs-components/queries/getChildrenLengthByPageUid";
@@ -17,6 +16,11 @@ import {
   importSpeech,
   render,
 } from "./components/ImportOtterDialog";
+import PasswordField from "./components/PasswordField";
+import localStorageGet from "roamjs-components/util/localStorageGet";
+import deleteBlock from "roamjs-components/writes/deleteBlock";
+import { render as renderSimpleAlert } from "roamjs-components/components/SimpleAlert";
+import apiPost from "roamjs-components/util/apiPost";
 
 const CONFIG = `roam/js/otter`;
 
@@ -33,9 +37,12 @@ runExtension("otter", async () => {
               description: "The email tied to your Otter account",
             },
             {
-              type: "text",
+              type: "custom",
               title: "password",
               description: "The password needed to access your Otter account",
+              options: {
+                component: PasswordField,
+              },
             },
             {
               type: "text",
@@ -64,6 +71,21 @@ runExtension("otter", async () => {
     },
   });
 
+  const tree = getBasicTreeByParentUid(pageUid);
+  const passwordNode = getSubTree({ tree, key: "password" });
+  if (!localStorageGet("otter-password") && !!passwordNode.children.length) {
+    renderSimpleAlert({
+      content:
+        "The RoamJS Otter extension has moved to storing your Otter password encrypted and on your device. Head to the roam/js/otter page to encrypt your password",
+      onConfirm: () => {
+        window.roamAlphaAPI.ui.mainWindow.openPage({
+          page: { title: "roam/js/otter" },
+        });
+        deleteBlock(passwordNode.uid);
+      },
+    });
+  }
+
   addBlockCommand({
     label: "Import Otter",
     callback: (blockUid) => render({ blockUid, pageUid }),
@@ -71,41 +93,38 @@ runExtension("otter", async () => {
 
   const autoImportRecordings = (parentUid: string, onSuccess?: () => void) => {
     const email = getSettingValueFromTree({ tree, key: "email" });
-    const password = getSettingValueFromTree({ tree, key: "password" });
+    const password = localStorageGet("otter-password");
     const label = getSettingValueFromTree({ tree, key: "label" });
     const template = getSettingValueFromTree({ tree, key: "template" });
-    return axios
-      .post<{ speeches: { id: string }[] }>(`${process.env.API_URL}/otter`, {
-        email,
-        password,
-        operation: "GET_SPEECHES",
-      })
-      .then((r) => {
-        const { children: idsChildren } = getSubTree({
-          parentUid: pageUid,
-          key: "ids",
-        });
-        const importedIds = new Set(idsChildren.map((t) => t.text));
-        return Promise.all(
-          r.data.speeches
-            .filter((s) => !importedIds.has(s.id))
-            .map((s) =>
-              importSpeech({
-                credentials: { email, password },
-                id: s.id,
-                label,
-                template,
-                onSuccess,
-                configUid: pageUid,
-                parentUid,
-                order: getChildrenLengthByPageUid(parentUid),
-              })
-            )
-        ).then((r) => r.flat());
+    return apiPost(`otter`, {
+      email,
+      password,
+      operation: "GET_SPEECHES",
+    }).then((r) => {
+      const { children: idsChildren } = getSubTree({
+        parentUid: pageUid,
+        key: "ids",
       });
+      const importedIds = new Set(idsChildren.map((t) => t.text));
+      return Promise.all(
+        (r.data.speeches as { id: string }[])
+          .filter((s) => !importedIds.has(s.id))
+          .map((s) =>
+            importSpeech({
+              credentials: { email, password },
+              id: s.id,
+              label,
+              template,
+              onSuccess,
+              configUid: pageUid,
+              parentUid,
+              order: getChildrenLengthByPageUid(parentUid),
+            })
+          )
+      ).then((r) => r.flat());
+    });
   };
 
-  const tree = getBasicTreeByParentUid(pageUid);
   if (tree.some((t) => toFlexRegex("auto import").test(t.text))) {
     autoImportRecordings(toRoamDateUid(new Date()), () => console.log("done!"));
   }

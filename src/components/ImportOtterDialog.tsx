@@ -8,7 +8,6 @@ import {
   Spinner,
   SpinnerSize,
 } from "@blueprintjs/core";
-import axios from "axios";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import createBlock from "roamjs-components/writes/createBlock";
 import deleteBlock from "roamjs-components/writes/deleteBlock";
@@ -21,7 +20,9 @@ import getSubTree from "roamjs-components/util/getSubTree";
 import setInputSetting from "roamjs-components/util/setInputSetting";
 import toRoamDate from "roamjs-components/date/toRoamDate";
 import format from "date-fns/format";
-import {addDays} from "../date"
+import addDays from "date-fns/addDays"
+import localStorageGet from 'roamjs-components/util/localStorageGet';
+import apiPost from 'roamjs-components/util/apiPost';
 
 type DialogProps = {
   blockUid: string;
@@ -64,40 +65,40 @@ export const importSpeech = ({
   onSuccess?: () => void;
   configUid: string;
 }) =>
-  axios
-    .post<{
-      title: string;
-      summary: string;
-      createdDate: number;
-      link: string;
-      transcripts: {
-        start: number;
-        end: number;
-        text: string;
-        speaker: string;
-      }[];
-    }>(`${process.env.API_URL}/otter`, {
+  apiPost(`otter`, {
       ...credentials,
       operation: "GET_SPEECH",
       params: { id },
     })
     .then((r) => {
+      const data = r.data as {
+        title: string;
+        summary: string;
+        createdDate: number;
+        link: string;
+        transcripts: {
+          start: number;
+          end: number;
+          text: string;
+          speaker: string;
+        }[];
+      };
       const newBlockUid = window.roamAlphaAPI.util.generateUID();
       let labelWithReplacements = label
-          .replace(/{title}/gi, r.data.title || "Untitled")
-          .replace(/{summary}/gi, r.data.summary)
+          .replace(/{title}/gi, data.title || "Untitled")
+          .replace(/{summary}/gi, data.summary)
           .replace(/{created-date(?::(.*?))?}/gi, (_, i) =>
               i
-                  ? format(new Date(r.data.createdDate * 1000), i)
-                  : new Date(r.data.createdDate * 1000).toLocaleString()
+                  ? format(new Date(data.createdDate * 1000), i)
+                  : new Date(data.createdDate * 1000).toLocaleString()
           )
-          .replace(/{link}/gi, r.data.link)
+          .replace(/{link}/gi, data.link)
 
       const node = {
         uid: newBlockUid,
         text: replaceDateSubstitutions(labelWithReplacements),
         children: [
-          ...r.data.transcripts.slice(0, 295).map((t) => {
+          ...data.transcripts.slice(0, 295).map((t) => {
             return ({
               text: replaceDateSubstitutions(template
                 .replace(/{start}/gi, offsetToTimestamp(t.start))
@@ -113,7 +114,7 @@ export const importSpeech = ({
                 )),
             })
           }),
-          ...(r.data.transcripts.length > 295
+          ...(data.transcripts.length > 295
             ? [
                 {
                   text: "Roam currently only allows 300 blocks to be created at once. If you need larger transcripts to be imported, please reach out to support@roamjs.com!",
@@ -154,7 +155,7 @@ const ImportOtterDialog = ({
   const { otterCredentials, label, template } = useMemo(() => {
     const tree = getBasicTreeByParentUid(pageUid);
     const email = getSettingValueFromTree({ tree, key: "email" });
-    const password = getSettingValueFromTree({ tree, key: "password" });
+    const password = localStorageGet('otter-password');
     const label = getSettingValueFromTree({
       tree,
       key: "label",
@@ -179,8 +180,7 @@ const ImportOtterDialog = ({
   useEffect(() => {
     if (initialLoading) {
       setError("");
-      axios
-        .post(`${process.env.API_URL}/otter`, {
+      apiPost(`otter`, {
           ...otterCredentials,
           operation: "GET_SPEECHES",
           params: { lastLoad, lastModified },

@@ -9,6 +9,8 @@ on:
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.DEPLOY_AWS_ACCESS_KEY }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.DEPLOY_AWS_ACCESS_SECRET }}
+  ROAMJS_EMAIL: dvargas92495@gmail.com
+  ROAMJS_EXTENSION_ID: otter
 
 jobs:
   deploy:
