@@ -11,6 +11,7 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.DEPLOY_AWS_ACCESS_SECRET }}
   ROAMJS_EMAIL: dvargas92495@gmail.com
   ROAMJS_EXTENSION_ID: otter
+  ROAMJS_DEVELOPER_TOKEN: ${{ secrets.ROAMJS_DEVELOPER_TOKEN }}
 
 jobs:
   deploy:

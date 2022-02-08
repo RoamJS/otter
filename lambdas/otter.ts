@@ -157,7 +157,6 @@ export const handler: APIGatewayProxyHandler = async (event) => {
   const token =
     event.headers.Authorization || event.headers.authorization || "";
   if (operation === "ENCRYPT_PASSWORD") {
-    // TODO: check for otter and init
     const inited = await axios
       .get(
         `https://lambda.roamjs.com/check?extensionId=otter${
