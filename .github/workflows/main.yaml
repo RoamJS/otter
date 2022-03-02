@@ -5,6 +5,7 @@ on:
     paths:
       - "src/**"
       - ".github/workflows/main.yaml"
+      - "package.json"
 
 env:
   API_URL: https://lambda.roamjs.com
