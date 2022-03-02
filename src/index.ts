@@ -93,7 +93,10 @@ runExtension("otter", async () => {
     callback: (blockUid) => render({ blockUid, pageUid }),
   });
 
-  const autoImportRecordings = (parentUid: string, onSuccess?: () => void) => {
+  const autoImportRecordings = (
+    parentUid: string,
+    onSuccess?: (id: string) => void
+  ) => {
     const email = getSettingValueFromTree({ tree, key: "email" });
     const password = localStorageGet("otter-password");
     const label = getSettingValueFromTree({ tree, key: "label" });
@@ -129,10 +132,16 @@ runExtension("otter", async () => {
 
   if (tree.some((t) => toFlexRegex("auto import").test(t.text))) {
     const dateUid = toRoamDateUid(new Date());
-    autoImportRecordings(dateUid, () =>
+    autoImportRecordings(dateUid, (id) =>
       renderToast({
         id: "otter-auto-import",
-        content: `Successfully imported latest otter recordings automatically to ${dateUid}!`,
+        content: `Successfully imported otter recording: ${id}!`,
+        intent: Intent.SUCCESS,
+      })
+    ).then((count) =>
+      renderToast({
+        id: "otter-auto-import",
+        content: `Successfully imported ${count} latest otter recordings automatically to ${dateUid}!`,
         intent: Intent.SUCCESS,
       })
     );

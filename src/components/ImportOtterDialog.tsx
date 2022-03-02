@@ -62,7 +62,7 @@ export const importSpeech = ({
   parentUid: string;
   label: string;
   template: string;
-  onSuccess?: () => void;
+  onSuccess?: (id: string) => void;
   configUid: string;
 }) =>
   apiPost(`otter`, {
@@ -134,7 +134,7 @@ export const importSpeech = ({
           .then(() =>
             setInputSetting({ blockUid: idsUid, key: id, value: newBlockUid })
           )
-          .then(onSuccess)
+          .then(() => onSuccess(id))
           .then(() => []);
       } else {
         return setInputSetting({
