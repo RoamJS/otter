@@ -1,5 +1,5 @@
 import axios, { AxiosError } from "axios";
-import { APIGatewayProxyHandler } from "aws-lambda";
+import type { APIGatewayProxyHandler } from "aws-lambda";
 import AES from "crypto-js/aes";
 import encutf8 from "crypto-js/enc-utf8";
 import randomstring from "randomstring";

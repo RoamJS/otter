@@ -21,6 +21,8 @@ import localStorageGet from "roamjs-components/util/localStorageGet";
 import deleteBlock from "roamjs-components/writes/deleteBlock";
 import { render as renderSimpleAlert } from "roamjs-components/components/SimpleAlert";
 import apiPost from "roamjs-components/util/apiPost";
+import { render as renderToast } from "roamjs-components/components/Toast";
+import { Intent } from "@blueprintjs/core";
 
 const CONFIG = `roam/js/otter`;
 
@@ -126,7 +128,14 @@ runExtension("otter", async () => {
   };
 
   if (tree.some((t) => toFlexRegex("auto import").test(t.text))) {
-    autoImportRecordings(toRoamDateUid(new Date()), () => console.log("done!"));
+    const dateUid = toRoamDateUid(new Date());
+    autoImportRecordings(dateUid, () =>
+      renderToast({
+        id: "otter-auto-import",
+        content: `Successfully imported latest otter recordings automatically to ${dateUid}!`,
+        intent: Intent.SUCCESS,
+      })
+    );
   }
 
   registerSmartBlocksCommand({
