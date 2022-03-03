@@ -5,7 +5,6 @@ import getPageTitleByBlockUid from "roamjs-components/queries/getPageTitleByBloc
 import getPageTitleByPageUid from "roamjs-components/queries/getPageTitleByPageUid";
 import registerSmartBlocksCommand from "roamjs-components/util/registerSmartBlocksCommand";
 import runExtension from "roamjs-components/util/runExtension";
-import toRoamDateUid from "roamjs-components/date/toRoamDateUid";
 import { createConfigObserver } from "roamjs-components/components/ConfigPage";
 import getSettingValueFromTree from "roamjs-components/util/getSettingValueFromTree";
 import getSubTree from "roamjs-components/util/getSubTree";
@@ -24,7 +23,7 @@ import apiPost from "roamjs-components/util/apiPost";
 import { render as renderToast } from "roamjs-components/components/Toast";
 import { Intent } from "@blueprintjs/core";
 import toRoamDate from "roamjs-components/date/toRoamDate";
-import { getPageUidByPageTitle } from "roamjs-components";
+import getPageUidByPageTitle from "roamjs-components/queries/getPageUidByPageTitle";
 
 const CONFIG = `roam/js/otter`;
 
