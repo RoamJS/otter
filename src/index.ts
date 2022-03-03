@@ -23,6 +23,8 @@ import { render as renderSimpleAlert } from "roamjs-components/components/Simple
 import apiPost from "roamjs-components/util/apiPost";
 import { render as renderToast } from "roamjs-components/components/Toast";
 import { Intent } from "@blueprintjs/core";
+import toRoamDate from "roamjs-components/date/toRoamDate";
+import { getPageUidByPageTitle } from "roamjs-components";
 
 const CONFIG = `roam/js/otter`;
 
@@ -131,8 +133,8 @@ runExtension("otter", async () => {
   };
 
   if (tree.some((t) => toFlexRegex("auto import").test(t.text))) {
-    const dateUid = toRoamDateUid(new Date());
-    autoImportRecordings(dateUid, (id) =>
+    const dateName = toRoamDate(new Date());
+    autoImportRecordings(getPageUidByPageTitle(dateName), (id) =>
       renderToast({
         id: "otter-auto-import",
         content: `Successfully imported otter recording: ${id}!`,
@@ -141,7 +143,7 @@ runExtension("otter", async () => {
     ).then((count) =>
       renderToast({
         id: "otter-auto-import",
-        content: `Successfully imported ${count} latest otter recordings automatically to ${dateUid}!`,
+        content: `Successfully imported ${count} latest otter recordings automatically to ${dateName}!`,
         intent: Intent.SUCCESS,
       })
     );
