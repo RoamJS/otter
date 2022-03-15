@@ -164,7 +164,8 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         }`,
         { headers: { Authorization: token } }
       )
-      .then((r) => r.data.success);
+      .then((r) => r.data.success)
+      .catch(() => false);
     if (!inited) {
       await axios.post(
         `https://lambda.roamjs.com/user?extensionId=otter`,
