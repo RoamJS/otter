@@ -112,10 +112,11 @@ runExtension("otter", async () => {
         key: "ids",
       });
       const importedIds = new Set(idsChildren.map((t) => t.text));
+      const bottom = getChildrenLengthByPageUid(parentUid);
       return Promise.all(
         (r.data.speeches as { id: string }[])
           .filter((s) => !importedIds.has(s.id))
-          .map((s) =>
+          .map((s, i) =>
             importSpeech({
               credentials: { email, password },
               id: s.id,
@@ -124,7 +125,7 @@ runExtension("otter", async () => {
               onSuccess,
               configUid: pageUid,
               parentUid,
-              order: getChildrenLengthByPageUid(parentUid),
+              order: bottom + i,
             })
           )
       ).then((r) => r.flat());
