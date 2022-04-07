@@ -67,7 +67,7 @@ class OtterApi {
       withCredentials: true,
     });
 
-    const cookieHeader = `${response.headers["set-cookie"][0]}; ${response.headers["set-cookie"][1]}`;
+    const cookieHeader =  response.headers["set-cookie"].map(s => `${s}`).join('; ');
 
     this.user = response.data.user;
 
