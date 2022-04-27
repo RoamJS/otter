@@ -67,7 +67,9 @@ class OtterApi {
       withCredentials: true,
     });
 
-    const cookieHeader =  response.headers["set-cookie"].map(s => `${s}`).join('; ');
+    const cookieHeader = response.headers["set-cookie"]
+      .map((s) => `${s}`)
+      .join("; ");
 
     this.user = response.data.user;
 
@@ -189,12 +191,20 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
     const encryptionSecret = randomstring.generate(16);
     const output = AES.encrypt(password, encryptionSecret).toString();
-    await putRoamJSUser(token, { key: encryptionSecret });
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ output }),
-      headers,
-    };
+    return putRoamJSUser(token, { key: encryptionSecret })
+      .then(() => ({
+        statusCode: 200,
+        body: JSON.stringify({ output }),
+        headers,
+      }))
+      .catch((e) => ({
+        statusCode: e.response?.status || 500,
+        body:
+          typeof e.response?.data === "object"
+            ? JSON.stringify(e.response?.data)
+            : e.response?.data || e.message,
+        headers,
+      }));
   } else if (operation === "GET_SPEECHES") {
     return getApi({ email, password, token })
       .then((otterApi) =>
