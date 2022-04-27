@@ -169,24 +169,37 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       .then((r) => r.data.success)
       .catch(() => false);
     if (!inited) {
-      await axios.post(
-        `https://lambda.roamjs.com/user?extensionId=otter`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${Buffer.from(
-              `${process.env.ROAMJS_EMAIL}:${process.env.ROAMJS_DEVELOPER_TOKEN}`
-            ).toString("base64")}`,
-            "x-roamjs-token": token,
-            "x-roamjs-extension": "otter",
-            ...(process.env.NODE_ENV === "development"
-              ? {
-                  "x-roamjs-dev": "true",
-                }
-              : {}),
-          },
-        }
-      );
+      const error = await axios
+        .post(
+          `https://lambda.roamjs.com/user?extensionId=otter`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${Buffer.from(
+                `${process.env.ROAMJS_EMAIL}:${process.env.ROAMJS_DEVELOPER_TOKEN}`
+              ).toString("base64")}`,
+              "x-roamjs-token": token,
+              "x-roamjs-extension": "otter",
+              ...(process.env.NODE_ENV === "development"
+                ? {
+                    "x-roamjs-dev": "true",
+                  }
+                : {}),
+            },
+          }
+        )
+        .then(() => false)
+        .catch((e) => e);
+      if (error) {
+        return {
+          statusCode: error.response?.status || 500,
+          body:
+            typeof error.response?.data === "object"
+              ? JSON.stringify(error.response?.data)
+              : error.response?.data || error.response?.message,
+          headers,
+        };
+      }
     }
 
     const encryptionSecret = randomstring.generate(16);
