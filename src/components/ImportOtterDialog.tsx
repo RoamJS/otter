@@ -33,7 +33,7 @@ const offsetToTimestamp = (offset?: number) => {
   if (!offset) {
     return "00:00";
   }
-  const totalSeconds = Math.round(offset / 1000);
+  const totalSeconds = Math.round(offset / 16000);
   const seconds = totalSeconds % 60;
   const minutes = Math.floor(totalSeconds / 60);
   return `${minutes}:${`${seconds}`.padStart(2, "0")}`;
