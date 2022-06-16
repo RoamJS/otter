@@ -23,6 +23,7 @@ import format from "date-fns/format";
 import addDays from "date-fns/addDays"
 import localStorageGet from 'roamjs-components/util/localStorageGet';
 import apiPost from 'roamjs-components/util/apiPost';
+import type { InputTextNode } from "roamjs-components/types";
 
 type DialogProps = {
   blockUid: string;
@@ -64,7 +65,7 @@ export const importSpeech = ({
   template: string;
   onSuccess?: (id: string) => void;
   configUid: string;
-}) =>
+}): Promise<InputTextNode[]> =>
   apiPost(`otter`, {
       ...credentials,
       operation: "GET_SPEECH",

@@ -24,6 +24,7 @@ import { render as renderToast } from "roamjs-components/components/Toast";
 import { Intent } from "@blueprintjs/core";
 import toRoamDate from "roamjs-components/date/toRoamDate";
 import getPageUidByPageTitle from "roamjs-components/queries/getPageUidByPageTitle";
+import toRoamDateUid from "roamjs-components/date/toRoamDateUid";
 
 const CONFIG = `roam/js/otter`;
 
@@ -153,8 +154,12 @@ runExtension("otter", async () => {
     text: "OTTER",
     handler: (context: { targetUid: string }) => () =>
       autoImportRecordings(
-        getPageTitleByBlockUid(context.targetUid) ||
-          getPageTitleByPageUid(context.targetUid)
+        getPageUidByPageTitle(getPageTitleByBlockUid(context.targetUid)) ||
+          context.targetUid
       ),
   });
+
+  window.roamjs.extension.otter = {
+    importOtter: (parentUid = toRoamDateUid()) => autoImportRecordings(parentUid),
+  };
 });
