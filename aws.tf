@@ -66,7 +66,7 @@ resource "aws_lambda_function" "lambda_function" {
   role          = data.aws_iam_role.roamjs_lambda_role.arn
   handler       = "otter.handler"
   filename      = data.archive_file.dummy.output_path
-  runtime       = "nodejs12.x"
+  runtime       = "nodejs16.x"
   publish       = false
   timeout       = 10
 
