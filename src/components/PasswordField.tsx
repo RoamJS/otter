@@ -7,15 +7,13 @@ import {
 } from "@blueprintjs/core";
 import React, { useState } from "react";
 import apiPost from "roamjs-components/util/apiPost";
-import useRoamJSTokenWarning from "roamjs-components/hooks/useRoamJSTokenWarning";
 import localStorageSet from "roamjs-components/util/localStorageSet";
 import { render as renderToast } from "roamjs-components/components/Toast";
 
-const PasswordField = ({}: { uid?: string; parentUid: string }) => {
+const PasswordField = () => {
   const [value, setValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  useRoamJSTokenWarning();
   return (
     <>
       <InputGroup
@@ -37,9 +35,12 @@ const PasswordField = ({}: { uid?: string; parentUid: string }) => {
           onClick={async () => {
             setLoading(true);
             setError("");
-            apiPost(`otter`, { password: value, operation: "ENCRYPT_PASSWORD" })
+            apiPost<{ output: string }>(`otter`, {
+              password: value,
+              operation: "ENCRYPT_PASSWORD",
+            })
               .then((r) => {
-                localStorageSet("otter-password", r.data.output);
+                localStorageSet("otter-password", r.output);
                 renderToast({
                   id: "otter-password",
                   content: "Successfully encrypted password locally!",

@@ -18,16 +18,16 @@ import createOverlayRender from "roamjs-components/util/createOverlayRender";
 import getSettingValueFromTree from "roamjs-components/util/getSettingValueFromTree";
 import getSubTree from "roamjs-components/util/getSubTree";
 import setInputSetting from "roamjs-components/util/setInputSetting";
-import toRoamDate from "roamjs-components/date/toRoamDate";
 import format from "date-fns/format";
-import addDays from "date-fns/addDays"
-import localStorageGet from 'roamjs-components/util/localStorageGet';
-import apiPost from 'roamjs-components/util/apiPost';
-import type { InputTextNode } from "roamjs-components/types";
+import addDays from "date-fns/addDays";
+import localStorageGet from "roamjs-components/util/localStorageGet";
+import apiPost from "roamjs-components/util/apiPost";
+import type { InputTextNode, OnloadArgs } from "roamjs-components/types";
+import type { OtterSpeech } from "../../lambdas/otter";
 
 type DialogProps = {
   blockUid: string;
-  pageUid: string;
+  extensionAPI: OnloadArgs["extensionAPI"];
 };
 
 const offsetToTimestamp = (offset?: number) => {
@@ -41,9 +41,15 @@ const offsetToTimestamp = (offset?: number) => {
 };
 
 const replaceDateSubstitutions = (text: string) =>
-    text.replace(/{today}/gi, `[[${toRoamDate(new Date())}]]`)
-    .replace(/{tomorrow}/gi, `[[${toRoamDate(addDays(new Date(), 1))}]]`)
-
+  text
+    .replace(
+      /{today}/gi,
+      `[[${window.roamAlphaAPI.util.dateToPageTitle(new Date())}]]`
+    )
+    .replace(
+      /{tomorrow}/gi,
+      `[[${window.roamAlphaAPI.util.dateToPageTitle(addDays(new Date(), 1))}]]`
+    );
 
 export const DEFAULT_LABEL = `{title} - {summary} ({created-date})`;
 export const DEFAULT_TEMPLATE = `{start} - {end} - {text}`;
@@ -55,7 +61,7 @@ export const importSpeech = ({
   label,
   template,
   onSuccess,
-  configUid,
+  extensionAPI,
 }: {
   credentials: { email: string; password: string };
   id: string;
@@ -64,109 +70,101 @@ export const importSpeech = ({
   label: string;
   template: string;
   onSuccess?: (id: string) => void;
-  configUid: string;
+  extensionAPI: OnloadArgs["extensionAPI"];
 }): Promise<InputTextNode[]> =>
   apiPost(`otter`, {
-      ...credentials,
-      operation: "GET_SPEECH",
-      params: { id },
-    })
-    .then((r) => {
-      const data = r.data as {
-        title: string;
-        summary: string;
-        createdDate: number;
-        link: string;
-        transcripts: {
-          start: number;
-          end: number;
-          text: string;
-          speaker: string;
-        }[];
-      };
-      const newBlockUid = window.roamAlphaAPI.util.generateUID();
-      let labelWithReplacements = label
-          .replace(/{title}/gi, data.title || "Untitled")
-          .replace(/{summary}/gi, data.summary)
-          .replace(/{created-date(?::(.*?))?}/gi, (_, i) =>
-              i
-                  ? format(new Date(data.createdDate * 1000), i)
-                  : new Date(data.createdDate * 1000).toLocaleString()
-          )
-          .replace(/{link}/gi, data.link)
+    ...credentials,
+    operation: "GET_SPEECH",
+    params: { id },
+  }).then((r) => {
+    const data = r.data as {
+      title: string;
+      summary: string;
+      createdDate: number;
+      link: string;
+      transcripts: {
+        start: number;
+        end: number;
+        text: string;
+        speaker: string;
+      }[];
+    };
+    const newBlockUid = window.roamAlphaAPI.util.generateUID();
+    let labelWithReplacements = label
+      .replace(/{title}/gi, data.title || "Untitled")
+      .replace(/{summary}/gi, data.summary)
+      .replace(/{created-date(?::(.*?))?}/gi, (_, i) =>
+        i
+          ? format(new Date(data.createdDate * 1000), i)
+          : new Date(data.createdDate * 1000).toLocaleString()
+      )
+      .replace(/{link}/gi, data.link);
 
-      const node = {
-        uid: newBlockUid,
-        text: replaceDateSubstitutions(labelWithReplacements),
-        children: [
-          ...data.transcripts.slice(0, 295).map((t) => {
-            return ({
-              text: replaceDateSubstitutions(template
+    const node = {
+      uid: newBlockUid,
+      text: replaceDateSubstitutions(labelWithReplacements),
+      children: [
+        ...data.transcripts.slice(0, 295).map((t) => {
+          return {
+            text: replaceDateSubstitutions(
+              template
                 .replace(/{start}/gi, offsetToTimestamp(t.start))
                 .replace(/{end}/gi, offsetToTimestamp(t.end))
                 .replace(/{text}/gi, t.text)
                 .replace(/{speaker(:initials)?}/gi, (_, i) =>
-                    i
-                        ? t.speaker
-                            .split(" ")
-                            .map((s) => `${s.slice(0, 1).toUpperCase()}.`)
-                            .join("")
-                        : t.speaker
-                )),
-            })
-          }),
-          ...(data.transcripts.length > 295
-            ? [
-                {
-                  text: "Roam currently only allows 300 blocks to be created at once. If you need larger transcripts to be imported, please reach out to support@roamjs.com!",
-                },
-              ]
-            : []),
-        ],
-      };
-      const { uid: idsUid } = getSubTree({ key: "ids", parentUid: configUid });
+                  i
+                    ? t.speaker
+                        .split(" ")
+                        .map((s) => `${s.slice(0, 1).toUpperCase()}.`)
+                        .join("")
+                    : t.speaker
+                )
+            ),
+          };
+        }),
+        ...(data.transcripts.length > 295
+          ? [
+              {
+                text: "Roam currently only allows 300 blocks to be created at once. If you need larger transcripts to be imported, please reach out to support@roamjs.com!",
+              },
+            ]
+          : []),
+      ],
+    };
+    const ids =
+      (extensionAPI.settings.get("ids") as Record<string, string>) || {};
 
-      if (onSuccess) {
-        return createBlock({
-          parentUid,
-          node,
-          order,
-        })
-          .then(() =>
-            setInputSetting({ blockUid: idsUid, key: id, value: newBlockUid })
-          )
-          .then(() => onSuccess(id))
-          .then(() => []);
-      } else {
-        return setInputSetting({
-          blockUid: idsUid,
-          key: id,
-          value: newBlockUid,
-        }).then(() => [node]);
-      }
-    });
+    if (onSuccess) {
+      return createBlock({
+        parentUid,
+        node,
+        order,
+      })
+        .then(() =>
+          extensionAPI.settings.set("ids", { ...ids, [id]: newBlockUid })
+        )
+        .then(() => onSuccess(id))
+        .then(() => []);
+    } else {
+      extensionAPI.settings.set("ids", { ...ids, [id]: newBlockUid });
+      return [node];
+    }
+  });
 
 const ImportOtterDialog = ({
   onClose,
   blockUid,
-  pageUid,
+  extensionAPI,
 }: {
   onClose: () => void;
 } & DialogProps) => {
   const { otterCredentials, label, template } = useMemo(() => {
-    const tree = getBasicTreeByParentUid(pageUid);
-    const email = getSettingValueFromTree({ tree, key: "email" });
-    const password = localStorageGet('otter-password');
-    const label = getSettingValueFromTree({
-      tree,
-      key: "label",
-      defaultValue: DEFAULT_LABEL,
-    });
-    const template = getSettingValueFromTree({
-      tree,
-      key: "template",
-      defaultValue: DEFAULT_TEMPLATE,
-    });
+    const email = (extensionAPI.settings.get("email") as string) || "";
+    const password = localStorageGet("otter-password");
+    const label =
+      (extensionAPI.settings.get("label") as string) || DEFAULT_LABEL;
+    const template =
+      (extensionAPI.settings.get("template") as string) || DEFAULT_TEMPLATE;
     return { otterCredentials: { email, password }, label, template };
   }, []);
   const [speeches, setSpeeches] = useState([]);
@@ -181,18 +179,23 @@ const ImportOtterDialog = ({
   useEffect(() => {
     if (initialLoading) {
       setError("");
-      apiPost(`otter`, {
-          ...otterCredentials,
-          operation: "GET_SPEECHES",
-          params: { lastLoad, lastModified },
-        })
+      apiPost<{
+        speeches: OtterSpeech[];
+        lastLoad: number;
+        lastModified: number;
+        isEnd: boolean;
+      }>(`otter`, {
+        ...otterCredentials,
+        operation: "GET_SPEECHES",
+        params: { lastLoad, lastModified },
+      })
         .then((r) => {
           setInitialLoading(false);
           if (!isEnd) {
-            setSpeeches([...speeches, ...r.data.speeches]);
-            setLastLoad(r.data.lastLoad);
-            setLastModified(r.data.lastModified);
-            setIsEnd(r.data.isEnd);
+            setSpeeches([...speeches, ...r.speeches]);
+            setLastLoad(r.lastLoad);
+            setLastModified(r.lastModified);
+            setIsEnd(r.isEnd);
           }
         })
         .catch((e) => {
@@ -287,7 +290,7 @@ const ImportOtterDialog = ({
                 label,
                 template,
                 onSuccess: onDeleteClose,
-                configUid: pageUid,
+                extensionAPI,
                 order: getOrderByBlockUid(blockUid),
               });
             }}

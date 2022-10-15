@@ -2,23 +2,40 @@ import axios, { AxiosError } from "axios";
 import type { APIGatewayProxyHandler } from "aws-lambda";
 import AES from "crypto-js/aes";
 import encutf8 from "crypto-js/enc-utf8";
-import randomstring from "randomstring";
+import randomstring from "nanoid";
 import getRoamJSUser from "roamjs-components/backend/getRoamJSUser";
 import putRoamJSUser from "roamjs-components/backend/putRoamJSUser";
 
 const API_BASE_URL = "https://otter.ai/forward/api/v1";
 const CSRF_COOKIE_NAME = "csrftoken";
 
-type OtterSpeech = {
+export type OtterSpeech = {
   speech_id: string;
   title: string;
   created_at: number;
   summary: string;
   otid: string;
+  id: string;
+};
+export type OtterSpeechInfo = {
+  speech_id: string;
+  title: string;
+  created_at: number;
+  summary: string;
+  otid: string;
+  id: string;
+  transcripts: {
+    transcript: string;
+    start_offset: number;
+    end_offset: number;
+    speaker_id: string;
+  }[];
+  speakers: { speaker_id: string; speaker_name: string; id: string }[];
 };
 
 const getCookieValueAndHeader = (cookieHeader: string, cookieName: string) => {
   const match = cookieHeader.match(new RegExp(`${cookieName}=(?<value>.*?);`));
+  if (!match) return { cookieHeader: "", cookieValue: "" };
   return { cookieValue: match[1], cookieHeader: match[0] };
 };
 class OtterApi {
@@ -68,7 +85,7 @@ class OtterApi {
     });
 
     const cookieHeader = response.headers["set-cookie"]
-      .map((s) => `${s}`)
+      .map((s: string) => `${s}`)
       .join("; ");
 
     this.user = response.data.user;
@@ -96,7 +113,12 @@ class OtterApi {
       },
     });
 
-    return data;
+    return data as {
+      speeches: OtterSpeech[];
+      end_of_list: boolean;
+      last_load_ts: number;
+      last_modified_at: number;
+    };
   };
 
   getSpeech = async (speech_id: string) => {
@@ -145,7 +167,7 @@ const getApi = ({
   password: string;
   token: string;
 }) =>
-  getRoamJSUser(token)
+  getRoamJSUser({ token })
     .then((data) => AES.decrypt(password, data.key as string).toString(encutf8))
     .then((password) => {
       return new OtterApi({
@@ -202,9 +224,9 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       }
     }
 
-    const encryptionSecret = randomstring.generate(16);
+    const encryptionSecret = randomstring();
     const output = AES.encrypt(password, encryptionSecret).toString();
-    return putRoamJSUser(token, { key: encryptionSecret })
+    return putRoamJSUser({ token, data: { key: encryptionSecret } })
       .then(() => ({
         statusCode: 200,
         body: JSON.stringify({ output }),
@@ -247,7 +269,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       .then((otterApi) =>
         otterApi.init().then(() => otterApi.getSpeech(params.id))
       )
-      .then((speech) => ({
+      .then((speech: OtterSpeechInfo) => ({
         statusCode: 200,
         body: JSON.stringify({
           transcripts: speech.transcripts.map((t) => ({
