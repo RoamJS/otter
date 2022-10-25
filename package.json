@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "roamjs-components": "^0.74.11",
-    "roamjs-scripts": "^0.24.0",
+    "roamjs-scripts": "^0.24.2",
     "xml2js": "^0.4.23"
   }
 }
