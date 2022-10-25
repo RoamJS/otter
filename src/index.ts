@@ -20,7 +20,7 @@ import React from "react";
 import migrateLegacySettings from "roamjs-components/util/migrateLegacySettings";
 import useRoamJSTokenWarning from "roamjs-components/hooks/useRoamJSTokenWarning";
 
-runExtension({
+export default runExtension({
   extensionId: "otter",
   run: async (args) => {
     migrateLegacySettings({
