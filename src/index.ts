@@ -18,7 +18,7 @@ import getPageUidByPageTitle from "roamjs-components/queries/getPageUidByPageTit
 import type { OtterSpeech } from "../lambdas/otter";
 import React from "react";
 import migrateLegacySettings from "roamjs-components/util/migrateLegacySettings";
-import useRoamJSTokenWarning from "roamjs-components/hooks/useRoamJSTokenWarning";
+import { addTokenDialogCommand } from "roamjs-components/components/TokenDialog";
 
 export default runExtension({
   extensionId: "otter",
@@ -36,7 +36,7 @@ export default runExtension({
         ],
       },
     });
-    useRoamJSTokenWarning();
+    addTokenDialogCommand();
     args.extensionAPI.settings.panel.create({
       tabTitle: "Otter",
       settings: [
