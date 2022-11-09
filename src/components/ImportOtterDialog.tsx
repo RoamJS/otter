@@ -23,7 +23,30 @@ import addDays from "date-fns/addDays";
 import localStorageGet from "roamjs-components/util/localStorageGet";
 import apiPost from "roamjs-components/util/apiPost";
 import type { InputTextNode, OnloadArgs } from "roamjs-components/types";
-import type { OtterSpeech } from "../../lambdas/otter";
+
+export type OtterSpeech = {
+  speech_id: string;
+  title: string;
+  created_at: number;
+  summary: string;
+  otid: string;
+  id: string;
+};
+export type OtterSpeechInfo = {
+  speech_id: string;
+  title: string;
+  created_at: number;
+  summary: string;
+  otid: string;
+  id: string;
+  transcripts: {
+    transcript: string;
+    start_offset: number;
+    end_offset: number;
+    speaker_id: string;
+  }[];
+  speakers: { speaker_id: string; speaker_name: string; id: string }[];
+};
 
 type DialogProps = {
   blockUid: string;
@@ -72,23 +95,22 @@ export const importSpeech = ({
   onSuccess?: (id: string) => void;
   extensionAPI: OnloadArgs["extensionAPI"];
 }): Promise<InputTextNode[]> =>
-  apiPost(`otter`, {
+  apiPost<{
+    title: string;
+    summary: string;
+    createdDate: number;
+    link: string;
+    transcripts: {
+      start: number;
+      end: number;
+      text: string;
+      speaker: string;
+    }[];
+  }>(`otter`, {
     ...credentials,
     operation: "GET_SPEECH",
     params: { id },
-  }).then((r) => {
-    const data = r.data as {
-      title: string;
-      summary: string;
-      createdDate: number;
-      link: string;
-      transcripts: {
-        start: number;
-        end: number;
-        text: string;
-        speaker: string;
-      }[];
-    };
+  }).then((data) => {
     const newBlockUid = window.roamAlphaAPI.util.generateUID();
     let labelWithReplacements = label
       .replace(/{title}/gi, data.title || "Untitled")

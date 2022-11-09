@@ -7,6 +7,7 @@ import {
   DEFAULT_LABEL,
   DEFAULT_TEMPLATE,
   importSpeech,
+  OtterSpeech,
   render,
 } from "./components/ImportOtterDialog";
 import PasswordField from "./components/PasswordField";
@@ -15,7 +16,6 @@ import apiPost from "roamjs-components/util/apiPost";
 import { render as renderToast } from "roamjs-components/components/Toast";
 import { Intent } from "@blueprintjs/core";
 import getPageUidByPageTitle from "roamjs-components/queries/getPageUidByPageTitle";
-import type { OtterSpeech } from "../lambdas/otter";
 import React from "react";
 import migrateLegacySettings from "roamjs-components/util/migrateLegacySettings";
 import { addTokenDialogCommand } from "roamjs-components/components/TokenDialog";
