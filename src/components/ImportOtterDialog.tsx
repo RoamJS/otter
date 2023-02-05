@@ -249,6 +249,8 @@ const ImportOtterDialog = ({
       canOutsideClickClose
       title={"Import Otter Speech"}
       onClose={onDeleteClose}
+      autoFocus={false}
+      enforceFocus={false}
     >
       <div className={Classes.DIALOG_BODY}>
         <RadioGroup
