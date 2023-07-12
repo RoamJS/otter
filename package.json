@@ -4,25 +4,17 @@
   "description": "Import your audio notes from Otter directly into Roam!",
   "main": "./build/main.js",
   "scripts": {
+    "postinstall": "patch-package",
+    "start": "samepage dev",
     "prebuild:roam": "npm install",
-    "build:roam": "roamjs-scripts build --depot",
-    "dev": "roamjs-scripts dev --depot",
-    "lambdas": "croamjs-scripts lambdas",
-    "preserver": "roamjs-scripts lambdas --build",
-    "server": "localhost-lambdas",
-    "start": "concurrently npm:dev npm:server"
+    "build:roam": "samepage build --dry",
+    "test": "samepage test"
   },
   "license": "MIT",
-  "devDependencies": {
-    "@types/aws-lambda": "^8.10.107",
-    "@types/crypto-js": "^4.1.0",
-    "@types/xml2js": "^0.4.8",
-    "concurrently": "^6.4.0",
-    "localhost-lambdas": "^0.2.14"
-  },
   "dependencies": {
-    "roamjs-components": "^0.74.11",
-    "roamjs-scripts": "^0.24.3",
-    "xml2js": "^0.4.23"
+    "roamjs-components": "^0.80.3"
+  },
+  "samepage": {
+    "extends": "node_modules/roamjs-components/package.json"
   }
 }

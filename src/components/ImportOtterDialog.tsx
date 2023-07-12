@@ -11,13 +11,9 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import createBlock from "roamjs-components/writes/createBlock";
 import deleteBlock from "roamjs-components/writes/deleteBlock";
-import getBasicTreeByParentUid from "roamjs-components/queries/getBasicTreeByParentUid";
 import getOrderByBlockUid from "roamjs-components/queries/getOrderByBlockUid";
 import getParentUidByBlockUid from "roamjs-components/queries/getParentUidByBlockUid";
 import createOverlayRender from "roamjs-components/util/createOverlayRender";
-import getSettingValueFromTree from "roamjs-components/util/getSettingValueFromTree";
-import getSubTree from "roamjs-components/util/getSubTree";
-import setInputSetting from "roamjs-components/util/setInputSetting";
 import format from "date-fns/format";
 import addDays from "date-fns/addDays";
 import localStorageGet from "roamjs-components/util/localStorageGet";
@@ -189,7 +185,7 @@ const ImportOtterDialog = ({
       (extensionAPI.settings.get("template") as string) || DEFAULT_TEMPLATE;
     return { otterCredentials: { email, password }, label, template };
   }, []);
-  const [speeches, setSpeeches] = useState([]);
+  const [speeches, setSpeeches] = useState<OtterSpeech[]>([]);
   const [value, setValue] = useState("");
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState("");
@@ -266,7 +262,7 @@ const ImportOtterDialog = ({
                   <b>{s.title || "Untitled"}</b> -{" "}
                   <span style={{ fontWeight: 400 }}>{s.summary}</span>{" "}
                   <span style={{ fontSize: 8, fontWeight: 400 }}>
-                    ({new Date(s.createdDate * 1000).toLocaleString()})
+                    ({new Date(s.created_at * 1000).toLocaleString()})
                   </span>
                 </span>
               }
