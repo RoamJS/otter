@@ -1,5 +1,7 @@
 node_modules
 build
 .env.local
+.env
+dist
 out
 extension.js

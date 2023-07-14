@@ -102,10 +102,14 @@ export const importSpeech = ({
       text: string;
       speaker: string;
     }[];
-  }>(`otter`, {
-    ...credentials,
-    operation: "GET_SPEECH",
-    params: { id },
+  }>({
+    domain: "https://api.samepage.network",
+    path: `extensions/otter/speeches`,
+    data: {
+      ...credentials,
+      operation: "GET_SPEECH",
+      params: { id },
+    },
   }).then((data) => {
     const newBlockUid = window.roamAlphaAPI.util.generateUID();
     let labelWithReplacements = label
@@ -202,10 +206,14 @@ const ImportOtterDialog = ({
         lastLoad: number;
         lastModified: number;
         isEnd: boolean;
-      }>(`otter`, {
-        ...otterCredentials,
-        operation: "GET_SPEECHES",
-        params: { lastLoad, lastModified },
+      }>({
+        domain: "https://api.samepage.network",
+        path: `extensions/otter/speeches`,
+        data: {
+          ...otterCredentials,
+          operation: "GET_SPEECHES",
+          params: { lastLoad, lastModified },
+        },
       })
         .then((r) => {
           setInitialLoading(false);

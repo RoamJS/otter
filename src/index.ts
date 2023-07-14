@@ -75,10 +75,14 @@ export default runExtension(async (args) => {
     const template =
       (args.extensionAPI.settings.get("template") as string) ||
       DEFAULT_TEMPLATE;
-    return apiPost<{ speeches: OtterSpeech[] }>(`otter`, {
-      email,
-      password,
-      operation: "GET_SPEECHES",
+    return apiPost<{ speeches: OtterSpeech[] }>({
+      domain: "https://api.samepage.network",
+      path: `extensions/otter/speeches`,
+      data: {
+        email,
+        password,
+        operation: "GET_SPEECHES",
+      },
     }).then((r) => {
       const ids =
         (args.extensionAPI.settings.get("ids") as Record<string, string>) || {};
