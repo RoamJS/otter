@@ -8,11 +8,9 @@ Otter extension imports your Otter voice transcription into Roam complete with t
 
 ## Setup
 
-You'll first need to set your RoamJS token, which could be found on [your RoamJS User page](https://roamjs.com/user) page. Then open the command palette in Roam and enter `Set RoamJS Token`. 
+Open the Roam Depot Settings and enter your email and password associated with your Otter account. If you signed up on Otter using a Google account, you will need to generate a password and use that email/password pair.
 
-Open the Roam Depot Settings, then enter your email and password associated with your Otter account. If you signed up on Otter using a Google account, you will need to generate a password and use that email/password pair.
-
-> **Warning:** The extension will need to send your credentials to RoamJS' backend in order to import your notes. We do not store your password - instead we store an encryption key using your RoamJS Token and the password stays encrypted on your device. If you are uncomfortable sharing your credentials with RoamJS' backend, do **not** use this extension.
+> **Warning:** The extension will need to send your credentials to RoamJS' backend in order to import your notes. We do not store your password - instead we store an encryption key and the password stays encrypted on your device. If you are uncomfortable sharing your credentials with RoamJS' backend, do **not** use this extension.
 
 This is necessary because Otter does not currently support a public-facing API.
 
@@ -29,7 +27,7 @@ The label is the first block that gets created when you import an Otter Note. Al
 - `{created-date}` - The date the note was created.
   - You could also pass in a custom format after a colon within the placeholder. For example, `{created-date:[[MMMM do, yyyy]]}` will output the created date as a Roam page.
 - `{link}` - The link to the note on Otter
-  
+
 By default, the label has a value of `{title} - {summary} ({created-date})`.
 
 The template is the format used for every transcript in the note, each nested under the label. You could configure what the template looks like on the `roam/js/otter` page. The template supports the following placeholders:
@@ -38,12 +36,12 @@ The template is the format used for every transcript in the note, each nested un
 - `{end}` - The end time of the transcript
 - `{text}` - The Otter recorded text of the transcript
 - `{speaker}` - The speaker linked to the text of the transcript. To use speaker initials instead, add an `initials` argument at the end like `{speaker:initials}`.
-  
+
 By default, the transcript has a value of `{start} - {end} - {text}`.
 
 Sample of default label and template:
 
-![](https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2Froamjs%2FMo9Z89zDL1.png?alt=media&token=7363ab23-7449-40ad-b761-b268fd597134)
+![image](https://github.com/RoamJS/otter/assets/3792666/e75f151f-a726-468e-8c82-ca332e3fe79c)
 
 Enabling the `Auto Import Enabled` flag will import any new conversations into Roam into the daily notes page. Be careful - the first time you enable this, it will import your latest 20 conversations since none of them have been marked as imported before.
 
@@ -51,6 +49,6 @@ This extension is integrated with [SmartBlocks](https://roamjs.com/extensions/sm
 
 ## Demo
 
-<video src="https://roamjs.com/loom/5d8a99a33bed4c149c9300bb1141125e.mp4" controls="controls"></video>
+https://github.com/RoamJS/otter/assets/3792666/102d04fd-65d0-4406-980c-ebd0769c3eab
 
 [View on Loom](https://www.loom.com/share/5d8a99a33bed4c149c9300bb1141125e)
