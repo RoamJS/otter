@@ -107,7 +107,7 @@ export default runExtension(async (args) => {
     });
   };
 
-  if (args.extensionAPI.settings.get("auto import")) {
+  if (args.extensionAPI.settings.get("auto-import")) {
     const dateName = window.roamAlphaAPI.util.dateToPageTitle(new Date());
     autoImportRecordings(getPageUidByPageTitle(dateName), (id) =>
       renderToast({
