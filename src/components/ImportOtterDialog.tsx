@@ -27,6 +27,7 @@ export type OtterSpeech = {
   summary: string;
   otid: string;
   id: string;
+  isProcessed: boolean;
 };
 export type OtterSpeechInfo = {
   speech_id: string;
@@ -35,6 +36,7 @@ export type OtterSpeechInfo = {
   summary: string;
   otid: string;
   id: string;
+  isProcessed: boolean;
   transcripts: {
     transcript: string;
     start_offset: number;
