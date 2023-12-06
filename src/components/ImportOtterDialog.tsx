@@ -20,21 +20,30 @@ import localStorageGet from "roamjs-components/util/localStorageGet";
 import apiPost from "roamjs-components/util/apiPost";
 import type { InputTextNode, OnloadArgs } from "roamjs-components/types";
 
+type Folder = {
+  id: number;
+  name: string;
+};
+
 export type OtterSpeech = {
   speech_id: string;
   title: string;
-  created_at: number;
+  createdDate: number;
   summary: string;
   otid: string;
   id: string;
+  isProcessed: boolean;
+  folder: Folder | null;
 };
 export type OtterSpeechInfo = {
   speech_id: string;
   title: string;
-  created_at: number;
+  createdDate: number;
   summary: string;
   otid: string;
   id: string;
+  isProcessed: boolean;
+  folder: Folder | null;
   transcripts: {
     transcript: string;
     start_offset: number;
@@ -270,7 +279,7 @@ const ImportOtterDialog = ({
                   <b>{s.title || "Untitled"}</b> -{" "}
                   <span style={{ fontWeight: 400 }}>{s.summary}</span>{" "}
                   <span style={{ fontSize: 8, fontWeight: 400 }}>
-                    ({new Date(s.created_at * 1000).toLocaleString()})
+                    ({new Date(s.createdDate * 1000).toLocaleString()})
                   </span>
                 </span>
               }
