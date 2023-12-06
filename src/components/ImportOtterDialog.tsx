@@ -20,6 +20,11 @@ import localStorageGet from "roamjs-components/util/localStorageGet";
 import apiPost from "roamjs-components/util/apiPost";
 import type { InputTextNode, OnloadArgs } from "roamjs-components/types";
 
+type Folder = {
+  id: number;
+  folder_name: string;
+};
+
 export type OtterSpeech = {
   speech_id: string;
   title: string;
@@ -28,6 +33,7 @@ export type OtterSpeech = {
   otid: string;
   id: string;
   isProcessed: boolean;
+  folder: Folder | null;
 };
 export type OtterSpeechInfo = {
   speech_id: string;
@@ -37,6 +43,7 @@ export type OtterSpeechInfo = {
   otid: string;
   id: string;
   isProcessed: boolean;
+  folder: Folder | null;
   transcripts: {
     transcript: string;
     start_offset: number;
