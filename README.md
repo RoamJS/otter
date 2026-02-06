@@ -1,6 +1,12 @@
+<a href="https://roamjs.com/">
+    <img src="https://avatars.githubusercontent.com/u/138642184" alt="RoamJS Logo" title="RoamJS" align="right" height="60" />
+</a>
+
 # Otter
 
-Import your audio notes from Otter directly into Roam!
+**Import Otter.ai recordings into Roam as timestamped transcripts. Pull your latest conversations via the command palette or SmartBlocks, customize label/template formatting, and optionally auto-import new recordings into your Daily Notes.**
+
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/RoamJS/otter)
 
 ## Overview
 
