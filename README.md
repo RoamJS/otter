@@ -6,7 +6,7 @@
 
 **Import Otter.ai recordings into Roam as timestamped transcripts. Pull your latest conversations via the command palette or SmartBlocks, customize label/template formatting, and optionally auto-import new recordings into your Daily Notes.**
 
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/RoamJS/otter)
+[![RoamJS](https://roamjs.com/badges/website.svg)](https://roamjs.com/) [![DeepWiki](https://roamjs.com/badges/deepwiki.svg)](https://deepwiki.com/RoamJS/otter) [![Slack](https://roamjs.com/badges/slack.svg)](https://roamresearch.slack.com/archives/C016N2B66JU)
 
 ## Overview
 
